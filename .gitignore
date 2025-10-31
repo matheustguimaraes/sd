@@ -74,6 +74,7 @@
 .vscode/
 .idea/
 cursor/
+.cursor/
 chegados/
 pdfs/
 pdf_to_markdown.py

@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    container_name: mdcc_sd_rabbitmq
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    container_name: mdcc_sd_postgres
+    image: postgres:14-alpine
+    volumes:
+      - mdcc_sd_db_storage:/var/lib/postgresql/data
+      - ./init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
+    restart: on-failure
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=mdcc_sd_db
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    ports:
+      - "5433:5432"
+
+  backend:
+    container_name: mdcc_sd_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app:cached
+    command: ["bash", "./entrypoint.dev.sh"]
+    restart: on-failure
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  rabbitmq_worker:
+    container_name: mdcc_sd_rabbitmq_worker
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app:cached
+    command: python manage.py process_images
+    restart: on-failure
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - postgres
+      - backend
+      - rabbitmq
+
+  frontend:
+    container_name: mdcc_sd_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app:cached
+      - /app/node_modules
+      - /app/.next
+    command: ["npm", "run", "dev"]
+    restart: on-failure
+    env_file:
+      - ./frontend/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  mdcc_sd_db_storage:
+  rabbitmq_data:
+
