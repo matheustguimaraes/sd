@@ -37,5 +37,7 @@ resource "aws_db_instance" "main" {
   tags = {
     Name = "${var.project_name}-postgres"
   }
+
+  apply_immediately = true
 }
 

@@ -126,30 +126,30 @@ variable "aws_secret_access_key" {
 variable "domain_name" {
   description = "Main domain name (e.g., example.com). Leave empty to use ALB DNS name directly."
   type        = string
-  default     = ""
+  default     = "toggo.dev"
 }
 
 variable "api_domain" {
   description = "API subdomain (e.g., api.example.com). If empty, will use api.{domain_name}"
   type        = string
-  default     = ""
+  default     = "toggo.dev/api"
 }
 
 variable "terraform_state_bucket_name" {
   description = "S3 bucket name for Terraform state storage (must be globally unique)"
   type        = string
-  default     = ""
+  default     = "mdcc-nuvem-terraform-state"
 }
 
 variable "terraform_state_lock_table_name" {
   description = "DynamoDB table name for Terraform state locking"
   type        = string
-  default     = "terraform-state-lock"
+  default     = "mdcc-nuvem-terraform-state-lock"
 }
 
 variable "key_pair_name" {
   description = "Name of the AWS EC2 Key Pair to use for SSH access. Leave empty to disable SSH key configuration."
   type        = string
-  default     = ""
+  default     = "mdcc-nuvem-key-pair"
 }
 

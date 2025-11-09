@@ -18,234 +18,133 @@ data "aws_ami" "amazon_linux" {
 locals {
   frontend_user_data = <<-EOF
 #!/bin/bash
-set -e
-exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-
-echo "Starting frontend instance setup..."
-
+set -ex
 yum update -y
-yum install -y docker git aws-cli amazon-ssm-agent
+yum install -y yum-utils >> /var/log/user-data.log
 
 # Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
 systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
-systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed" >> /var/log/user-data.log
 
-# Start Docker
-systemctl start docker
-systemctl enable docker
-usermod -a -G docker ec2-user
+# Install Docker
+yum install -y docker
+service docker start 
 
-# Wait for Docker to be ready
-sleep 5
+# Install AWS CLI
+yum install -y aws-cli
 
-# Install Docker Compose
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+# Authenticate to ECR
+aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com >> /var/log/user-data.log
 
-# Login to ECR using instance role (retry up to 3 times)
-for i in {1..3}; do
-  if aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com; then
-    echo "ECR login successful"
-    break
-  else
-    echo "ECR login attempt $i failed, retrying..."
-    sleep 5
-  fi
-done
+# Pull the Docker image from ECR
+docker pull ${aws_ecr_repository.frontend.repository_url}:latest >> /var/log/user-data.log
 
-# Pull frontend container (retry up to 3 times)
-for i in {1..3}; do
-  if docker pull ${aws_ecr_repository.frontend.repository_url}:latest; then
-    echo "Frontend image pulled successfully"
-    break
-  else
-    echo "Docker pull attempt $i failed, retrying..."
-    sleep 10
-  fi
-done
-
-# Remove existing container if it exists
-docker rm -f frontend || true
-
-# Run frontend container
+# Run the Docker image
 docker run -d \
-  --name frontend \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -e NEXT_PUBLIC_API_URL=${var.domain_name != "" ? "http://${var.domain_name}/api" : "http://${aws_lb.main.dns_name}/api"} \
-  ${aws_ecr_repository.frontend.repository_url}:latest
-
-# Wait for container to be running
-echo "Waiting for frontend container to start..."
-for i in {1..30}; do
-  if docker ps | grep -q frontend; then
-    echo "Frontend container is running"
-    break
-  fi
-  echo "Waiting for frontend container... ($i/30)"
-  sleep 2
-done
-
-# Health check
-echo "Checking frontend container health..."
-sleep 10
-if curl -f http://localhost:3000 > /dev/null 2>&1; then
-  echo "Frontend health check passed"
-else
-  echo "Frontend health check failed, but continuing..."
-  docker logs frontend || true
-fi
-
-echo "Frontend setup completed"
-
+--name frontend \
+--restart unless-stopped \
+-p 3000:3000 \
+--env NEXT_PUBLIC_API_URL=${var.api_domain} \
+${aws_ecr_repository.frontend.repository_url}:latest >> /var/log/user-data.log 2>&1
 EOF
 
   backend_user_data = <<-EOF
 #!/bin/bash
-set -e
-exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-
-echo "Starting backend instance setup..."
-
+set -ex
 yum update -y
-yum install -y docker git aws-cli amazon-ssm-agent curl
+yum install -y yum-utils >> /var/log/user-data.log 2>&1
 
 # Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
 systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
-systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed" >> /var/log/user-data.log 2>&1
 
-# Start Docker
-systemctl start docker
-systemctl enable docker
-usermod -a -G docker ec2-user
+# Install Docker
+yum install -y docker
+service docker start 
 
-# Wait for Docker to be ready
-sleep 5
+# Install AWS CLI
+yum install -y aws-cli
 
-# Install Docker Compose
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+# Authenticate to ECR
+aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
-# Login to ECR using instance role (retry up to 3 times)
-for i in {1..3}; do
-  if aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com; then
-    echo "ECR login successful"
-    break
-  else
-    echo "ECR login attempt $i failed, retrying..."
-    sleep 5
-  fi
-done
+# Pull the Docker image from ECR
+docker pull ${aws_ecr_repository.backend.repository_url}:latest >> /var/log/user-data.log 2>&1
 
-# Pull backend container (retry up to 3 times)
-for i in {1..3}; do
-  if docker pull ${aws_ecr_repository.backend.repository_url}:latest; then
-    echo "Backend image pulled successfully"
-    break
-  else
-    echo "Docker pull attempt $i failed, retrying..."
-    sleep 10
-  fi
-done
-
-# Remove existing container if it exists
-docker rm -f backend || true
-
-# Run backend container
+# Run the Docker image
 docker run -d \
-  --name backend \
-  --restart unless-stopped \
-  -p 8000:8000 \
-  -e POSTGRES_HOST=${aws_db_instance.main.address} \
-  -e POSTGRES_PORT=5432 \
-  -e POSTGRES_DB=${var.db_name} \
-  -e POSTGRES_USER=${var.db_username} \
-  -e POSTGRES_PASSWORD=${var.db_password} \
-  -e AWS_ACCESS_KEY_ID=${var.aws_access_key_id} \
-  -e AWS_SECRET_ACCESS_KEY=${var.aws_secret_access_key} \
-  -e AWS_STORAGE_BUCKET_NAME=${var.s3_bucket_name} \
-  -e AWS_S3_REGION_NAME=${var.aws_region} \
-  -e DYNAMODB_REGION=${var.aws_region} \
-  -e DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
-  -e SQS_QUEUE_URL=${aws_sqs_queue.image_processing.url} \
-  -e AWS_REGION=${var.aws_region} \
-  ${aws_ecr_repository.backend.repository_url}:latest
-
-# Wait for container to be running
-echo "Waiting for backend container to start..."
-for i in {1..60}; do
-  if docker ps | grep -q backend; then
-    echo "Backend container is running"
-    break
-  fi
-  echo "Waiting for backend container... ($i/60)"
-  sleep 2
-done
-
-# Health check - wait for Django to be ready
-echo "Checking backend container health..."
-for i in {1..30}; do
-  if curl -f http://localhost:8000/ > /dev/null 2>&1 || curl -f http://localhost:8000/api/products/ > /dev/null 2>&1; then
-    echo "Backend health check passed"
-    break
-  fi
-  echo "Waiting for backend to be ready... ($i/30)"
-  sleep 5
-done
-
-# Show container logs for debugging
-echo "Backend container logs:"
-docker logs backend --tail 50 || true
-
-echo "Backend setup completed"
-
+--name backend \
+--restart unless-stopped \
+-p 8000:8000 \
+--env POSTGRES_HOST=${aws_db_instance.main.address} \
+--env POSTGRES_PORT=5432 \
+--env POSTGRES_DB=${var.db_name} \
+--env POSTGRES_USER=${var.db_username} \
+--env POSTGRES_PASSWORD=${var.db_password} \
+--env AWS_ACCESS_KEY_ID=${var.aws_access_key_id} \
+--env AWS_SECRET_ACCESS_KEY=${var.aws_secret_access_key} \
+--env AWS_STORAGE_BUCKET_NAME=${var.s3_bucket_name} \
+--env AWS_S3_REGION_NAME=${var.aws_region} \
+--env DYNAMODB_REGION=${var.aws_region} \
+--env DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
+--env RABBITMQ_HOST=mdcc_sd_rabbitmq \
+--env RABBITMQ_PORT=5672 \
+--env RABBITMQ_USER=admin \
+--env RABBITMQ_PASSWORD=admin \
+--env RABBITMQ_QUEUE_NAME=${var.sqs_queue_name} \
+--env AWS_REGION=${var.aws_region} \
+${aws_ecr_repository.backend.repository_url}:latest >> /var/log/user-data.log 2>&1
 EOF
 
   worker_user_data = <<-EOF
 #!/bin/bash
+set -ex
 yum update -y
-yum install -y docker git aws-cli amazon-ssm-agent
+yum install -y yum-utils >> /var/log/user-data.log 2>&1
 
 # Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
 systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
-systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed" >> /var/log/user-data.log 2>&1
 
-# Start Docker
-systemctl start docker
-systemctl enable docker
-usermod -a -G docker ec2-user
+# Install Docker
+yum install -y docker
+service docker start 
 
-# Install Docker Compose
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+# Install AWS CLI
+yum install -y aws-cli
 
-# Login to ECR using instance role
+# Authenticate to ECR
 aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
-# Pull and run worker container
-docker pull ${aws_ecr_repository.worker.repository_url}:latest
-docker run -d \
-  --name worker \
-  --restart unless-stopped \
-  -e POSTGRES_HOST=${aws_db_instance.main.address} \
-  -e POSTGRES_PORT=5432 \
-  -e POSTGRES_DB=${var.db_name} \
-  -e POSTGRES_USER=${var.db_username} \
-  -e POSTGRES_PASSWORD=${var.db_password} \
-  -e AWS_ACCESS_KEY_ID=${var.aws_access_key_id} \
-  -e AWS_SECRET_ACCESS_KEY=${var.aws_secret_access_key} \
-  -e AWS_STORAGE_BUCKET_NAME=${var.s3_bucket_name} \
-  -e AWS_S3_REGION_NAME=${var.aws_region} \
-  -e DYNAMODB_REGION=${var.aws_region} \
-  -e DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
-  -e SQS_QUEUE_URL=${aws_sqs_queue.image_processing.url} \
-  -e AWS_REGION=${var.aws_region} \
-  ${aws_ecr_repository.worker.repository_url}:latest \
-  python manage.py process_images
+# Pull the Docker image from ECR
+docker pull ${aws_ecr_repository.worker.repository_url}:latest >> /var/log/user-data.log 2>&1
 
+# Run the Docker image with process_images command
+docker run -d \
+--name worker \
+--restart unless-stopped \
+--env POSTGRES_HOST=${aws_db_instance.main.address} \
+--env POSTGRES_PORT=5432 \
+--env POSTGRES_DB=${var.db_name} \
+--env POSTGRES_USER=${var.db_username} \
+--env POSTGRES_PASSWORD=${var.db_password} \
+--env AWS_ACCESS_KEY_ID=${var.aws_access_key_id} \
+--env AWS_SECRET_ACCESS_KEY=${var.aws_secret_access_key} \
+--env AWS_STORAGE_BUCKET_NAME=${var.s3_bucket_name} \
+--env AWS_S3_REGION_NAME=${var.aws_region} \
+--env DYNAMODB_REGION=${var.aws_region} \
+--env DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
+--env RABBITMQ_HOST=mdcc_sd_rabbitmq \
+--env RABBITMQ_PORT=5672 \
+--env RABBITMQ_USER=admin \
+--env RABBITMQ_PASSWORD=admin \
+--env RABBITMQ_QUEUE_NAME=${var.sqs_queue_name} \
+--env AWS_REGION=${var.aws_region} \
+${aws_ecr_repository.worker.repository_url}:latest \
+python manage.py process_images >> /var/log/user-data.log 2>&1
 EOF
 }
 
@@ -323,10 +222,10 @@ resource "aws_launch_template" "worker" {
 
 # Auto Scaling Group for Frontend
 resource "aws_autoscaling_group" "frontend" {
-  name                = "${var.project_name}-frontend-asg"
-  vpc_zone_identifier = aws_subnet.public[*].id
-  target_group_arns   = [aws_lb_target_group.frontend.arn]
-  health_check_type   = "ELB"
+  name                      = "${var.project_name}-frontend-asg"
+  vpc_zone_identifier       = aws_subnet.public[*].id
+  target_group_arns         = [aws_lb_target_group.frontend.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 600
 
   min_size         = var.min_instances
@@ -347,10 +246,10 @@ resource "aws_autoscaling_group" "frontend" {
 
 # Auto Scaling Group for Backend
 resource "aws_autoscaling_group" "backend" {
-  name                = "${var.project_name}-backend-asg"
-  vpc_zone_identifier = aws_subnet.public[*].id
-  target_group_arns   = [aws_lb_target_group.backend.arn]
-  health_check_type   = "ELB"
+  name                      = "${var.project_name}-backend-asg"
+  vpc_zone_identifier       = aws_subnet.public[*].id
+  target_group_arns         = [aws_lb_target_group.backend.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 600
 
   min_size         = var.min_instances
@@ -397,7 +296,7 @@ resource "aws_autoscaling_policy" "frontend_scale_up" {
   autoscaling_group_name = aws_autoscaling_group.frontend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = 1
-  cooldown               = 300  # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
+  cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
 # Auto Scaling Policy - Scale Down (Frontend)
@@ -406,7 +305,7 @@ resource "aws_autoscaling_policy" "frontend_scale_down" {
   autoscaling_group_name = aws_autoscaling_group.frontend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = -1
-  cooldown               = 300  # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
+  cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
 # CloudWatch Alarm - CPU High (Frontend)
@@ -451,7 +350,7 @@ resource "aws_autoscaling_policy" "backend_scale_up" {
   autoscaling_group_name = aws_autoscaling_group.backend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = 1
-  cooldown               = 300  # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
+  cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
 # Auto Scaling Policy - Scale Down (Backend)
@@ -460,7 +359,7 @@ resource "aws_autoscaling_policy" "backend_scale_down" {
   autoscaling_group_name = aws_autoscaling_group.backend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = -1
-  cooldown               = 300  # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
+  cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
 # CloudWatch Alarm - CPU High (Backend)
