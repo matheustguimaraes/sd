@@ -88,6 +88,7 @@ docker run -d \
 --name backend \
 --restart unless-stopped \
 -p 8000:8000 \
+--env DEBUG=False \
 --env POSTGRES_HOST=${aws_db_instance.main.address} \
 --env POSTGRES_PORT=5432 \
 --env POSTGRES_DB=${var.db_name} \
