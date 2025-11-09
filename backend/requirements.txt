@@ -1,4 +1,5 @@
 asgiref==3.10.0
+awslogs==0.15.0
 black==25.9.0
 boto3==1.40.63
 botocore==1.40.63

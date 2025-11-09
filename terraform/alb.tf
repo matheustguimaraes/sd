@@ -59,8 +59,8 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
-# ALB Listener for Frontend (port 80 -> frontend)
-resource "aws_lb_listener" "frontend" {
+# ALB Listener (port 80)
+resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
   protocol          = "HTTP"
@@ -71,9 +71,11 @@ resource "aws_lb_listener" "frontend" {
   }
 }
 
-# ALB Listener Rule for Backend API (path-based routing)
+# ALB Listener Rule for Backend API (subdomain-based routing: api.domain.com)
+# Only create if domain_name is provided
 resource "aws_lb_listener_rule" "backend" {
-  listener_arn = aws_lb_listener.frontend.arn
+  count        = var.domain_name != "" ? 1 : 0
+  listener_arn = aws_lb_listener.main.arn
   priority     = 100
 
   action {
@@ -82,8 +84,27 @@ resource "aws_lb_listener_rule" "backend" {
   }
 
   condition {
-    path_pattern {
-      values = ["/api/*", "/auth/*", "/products/*", "/swagger/*"]
+    host_header {
+      values = var.api_domain != "" ? [var.api_domain] : ["api.${var.domain_name}"]
+    }
+  }
+}
+
+# ALB Listener Rule for Frontend (subdomain-based routing: domain.com)
+# Only create if domain_name is provided
+resource "aws_lb_listener_rule" "frontend" {
+  count        = var.domain_name != "" ? 1 : 0
+  listener_arn = aws_lb_listener.main.arn
+  priority     = 200
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.frontend.arn
+  }
+
+  condition {
+    host_header {
+      values = [var.domain_name]
     }
   }
 }

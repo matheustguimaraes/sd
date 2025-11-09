@@ -123,3 +123,27 @@ variable "aws_secret_access_key" {
   sensitive   = true
 }
 
+variable "domain_name" {
+  description = "Main domain name (e.g., example.com). Leave empty to use ALB DNS name directly."
+  type        = string
+  default     = ""
+}
+
+variable "api_domain" {
+  description = "API subdomain (e.g., api.example.com). If empty, will use api.{domain_name}"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_state_bucket_name" {
+  description = "S3 bucket name for Terraform state storage (must be globally unique)"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_state_lock_table_name" {
+  description = "DynamoDB table name for Terraform state locking"
+  type        = string
+  default     = "terraform-state-lock"
+}
+

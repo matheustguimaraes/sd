@@ -37,3 +37,14 @@ cpu_threshold_scale_down = 25
 aws_access_key_id = "YOUR_AWS_ACCESS_KEY_ID"
 aws_secret_access_key = "YOUR_AWS_SECRET_ACCESS_KEY"
 
+# Domain Configuration (optional - leave empty to use ALB DNS name directly)
+# If you have a domain, configure it here for subdomain-based routing:
+# domain_name = "example.com"        # Main domain (e.g., example.com -> frontend)
+# api_domain = "api.example.com"     # API subdomain (e.g., api.example.com -> backend)
+# If api_domain is empty, it will default to "api.{domain_name}"
+
+# Terraform State Configuration (optional - for S3 backend)
+# Uncomment and configure to use S3 backend for Terraform state:
+# terraform_state_bucket_name = "mdcc-nuvem-terraform-state-UNIQUE_NAME"  # Must be globally unique
+# terraform_state_lock_table_name = "terraform-state-lock"  # DynamoDB table for state locking
+
