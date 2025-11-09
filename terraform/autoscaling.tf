@@ -19,46 +19,17 @@ locals {
   frontend_user_data = <<-EOF
 #!/bin/bash
 set -ex
+# Create user-data log file
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+echo "Starting user-data script execution..."
+
 yum update -y
-yum install -y yum-utils >> /var/log/user-data.log
+yum install -y yum-utils
 
 # Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
 systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
-systemctl status amazon-ssm-agent || echo "SSM agent status check completed" >> /var/log/user-data.log
-
-# Install Docker
-yum install -y docker
-service docker start 
-
-# Install AWS CLI
-yum install -y aws-cli
-
-# Authenticate to ECR
-aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com >> /var/log/user-data.log
-
-# Pull the Docker image from ECR
-docker pull ${aws_ecr_repository.frontend.repository_url}:latest >> /var/log/user-data.log
-
-# Run the Docker image
-docker run -d \
---name frontend \
---restart unless-stopped \
--p 3000:3000 \
---env NEXT_PUBLIC_API_URL=${var.api_domain} \
-${aws_ecr_repository.frontend.repository_url}:latest >> /var/log/user-data.log 2>&1
-EOF
-
-  backend_user_data = <<-EOF
-#!/bin/bash
-set -ex
-yum update -y
-yum install -y yum-utils >> /var/log/user-data.log 2>&1
-
-# Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
-systemctl start amazon-ssm-agent
-systemctl enable amazon-ssm-agent
-systemctl status amazon-ssm-agent || echo "SSM agent status check completed" >> /var/log/user-data.log 2>&1
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
 
 # Install Docker
 yum install -y docker
@@ -71,7 +42,46 @@ yum install -y aws-cli
 aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
 # Pull the Docker image from ECR
-docker pull ${aws_ecr_repository.backend.repository_url}:latest >> /var/log/user-data.log 2>&1
+docker pull ${aws_ecr_repository.frontend.repository_url}:latest
+
+# Run the Docker image
+docker run -d \
+--name frontend \
+--restart unless-stopped \
+-p 3000:3000 \
+--env NEXT_PUBLIC_API_URL=${var.api_domain} \
+${aws_ecr_repository.frontend.repository_url}:latest
+
+echo "User-data script execution completed."
+EOF
+
+  backend_user_data = <<-EOF
+#!/bin/bash
+set -ex
+# Create user-data log file
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+echo "Starting user-data script execution..."
+
+yum update -y
+yum install -y yum-utils
+
+# Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
+systemctl start amazon-ssm-agent
+systemctl enable amazon-ssm-agent
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
+
+# Install Docker
+yum install -y docker
+service docker start 
+
+# Install AWS CLI
+yum install -y aws-cli
+
+# Authenticate to ECR
+aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
+
+# Pull the Docker image from ECR
+docker pull ${aws_ecr_repository.backend.repository_url}:latest
 
 # Run the Docker image
 docker run -d \
@@ -95,19 +105,25 @@ docker run -d \
 --env RABBITMQ_PASSWORD=admin \
 --env RABBITMQ_QUEUE_NAME=${var.sqs_queue_name} \
 --env AWS_REGION=${var.aws_region} \
-${aws_ecr_repository.backend.repository_url}:latest >> /var/log/user-data.log 2>&1
+${aws_ecr_repository.backend.repository_url}:latest
+
+echo "User-data script execution completed."
 EOF
 
   worker_user_data = <<-EOF
 #!/bin/bash
 set -ex
+# Create user-data log file
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+echo "Starting user-data script execution..."
+
 yum update -y
-yum install -y yum-utils >> /var/log/user-data.log 2>&1
+yum install -y yum-utils
 
 # Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
 systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
-systemctl status amazon-ssm-agent || echo "SSM agent status check completed" >> /var/log/user-data.log 2>&1
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
 
 # Install Docker
 yum install -y docker
@@ -120,7 +136,7 @@ yum install -y aws-cli
 aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
 # Pull the Docker image from ECR
-docker pull ${aws_ecr_repository.worker.repository_url}:latest >> /var/log/user-data.log 2>&1
+docker pull ${aws_ecr_repository.worker.repository_url}:latest
 
 # Run the Docker image with process_images command
 docker run -d \
@@ -144,7 +160,9 @@ docker run -d \
 --env RABBITMQ_QUEUE_NAME=${var.sqs_queue_name} \
 --env AWS_REGION=${var.aws_region} \
 ${aws_ecr_repository.worker.repository_url}:latest \
-python manage.py process_images >> /var/log/user-data.log 2>&1
+python manage.py process_images
+
+echo "User-data script execution completed."
 EOF
 }
 
