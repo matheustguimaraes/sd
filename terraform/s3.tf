@@ -8,6 +8,15 @@ resource "aws_s3_bucket" "images" {
   }
 }
 
+# S3 Bucket Ownership Controls (required for ACLs)
+resource "aws_s3_bucket_ownership_controls" "images" {
+  bucket = aws_s3_bucket.images.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
 # S3 Bucket Public Access Block (adjust as needed)
 resource "aws_s3_bucket_public_access_block" "images" {
   bucket = aws_s3_bucket.images.id
@@ -16,6 +25,8 @@ resource "aws_s3_bucket_public_access_block" "images" {
   block_public_policy     = false
   ignore_public_acls      = false
   restrict_public_buckets = false
+
+  depends_on = [aws_s3_bucket_ownership_controls.images]
 }
 
 # S3 Bucket CORS Configuration
@@ -29,6 +40,26 @@ resource "aws_s3_bucket_cors_configuration" "images" {
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }
+}
+
+# S3 Bucket Policy for Public Read Access
+resource "aws_s3_bucket_policy" "images" {
+  bucket = aws_s3_bucket.images.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.images.arn}/*"
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.images]
 }
 
 # S3 Bucket for Terraform State

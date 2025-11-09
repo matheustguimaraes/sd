@@ -97,6 +97,7 @@ docker run -d \
 --env AWS_ACCESS_KEY_ID=${var.aws_access_key_id} \
 --env AWS_SECRET_ACCESS_KEY=${var.aws_secret_access_key} \
 --env AWS_STORAGE_BUCKET_NAME=${var.s3_bucket_name} \
+--env AWS_S3_CUSTOM_DOMAIN=${aws_s3_bucket.images.id}.s3.${var.aws_region}.amazonaws.com \
 --env AWS_S3_REGION_NAME=${var.aws_region} \
 --env DYNAMODB_REGION=${var.aws_region} \
 --env DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
@@ -151,6 +152,7 @@ docker run -d \
 --env AWS_ACCESS_KEY_ID=${var.aws_access_key_id} \
 --env AWS_SECRET_ACCESS_KEY=${var.aws_secret_access_key} \
 --env AWS_STORAGE_BUCKET_NAME=${var.s3_bucket_name} \
+--env AWS_S3_CUSTOM_DOMAIN=${aws_s3_bucket.images.id}.s3.${var.aws_region}.amazonaws.com \
 --env AWS_S3_REGION_NAME=${var.aws_region} \
 --env DYNAMODB_REGION=${var.aws_region} \
 --env DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
