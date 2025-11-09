@@ -1,6 +1,7 @@
 from datetime import timedelta
 from pathlib import Path
 import os
+import re
 
 from products_api.environment_variables import (
     POSTGRES_DATABASE,
@@ -157,6 +158,10 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
+    # Disable CSRF for API endpoints (using JWT authentication)
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
 
 CORS_ALLOWED_ORIGINS = [
@@ -171,6 +176,20 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://.*\.elb\.amazonaws\.com$",
     r"^https://.*\.elb\.amazonaws\.com$",
 ]
+
+# CSRF settings - exempt API endpoints since we use JWT authentication
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://toggo.dev",
+    "https://toggo.dev",
+]
+
+# Allow CSRF for any ALB domain
+CSRF_TRUSTED_ORIGINS.extend([
+    origin for origin in CORS_ALLOWED_ORIGINS
+    if re.match(r"^https?://.*\.elb\.amazonaws\.com$", origin)
+])
 
 # Allow CORS for media files
 CORS_ALLOW_CREDENTIALS = True

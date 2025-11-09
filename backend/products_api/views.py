@@ -3,6 +3,8 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from products_api.models import Product, Profile
 from products_api.serializers import ProductSerializer, ProfileSerializer
@@ -17,6 +19,7 @@ import uuid
 from datetime import datetime
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = Product.objects.all()
@@ -125,6 +128,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
 
 
+@csrf_exempt
 @api_view(["GET", "PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
@@ -154,6 +158,7 @@ def profile_view(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_view(request):
