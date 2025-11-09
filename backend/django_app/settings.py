@@ -98,12 +98,14 @@ TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Storage configuration
 if DEBUG:
     # Use local filesystem storage for development
+    STATIC_URL = "static/"
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
     DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
     MEDIA_ROOT = BASE_DIR / "media"
     MEDIA_URL = "/media/"
@@ -114,16 +116,30 @@ else:
         AWS_SECRET_ACCESS_KEY,
         AWS_STORAGE_BUCKET_NAME,
         AWS_S3_REGION_NAME,
+        AWS_S3_CUSTOM_DOMAIN,
     )
 
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    # S3 configuration for both static and media files
     AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY
     AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME
     AWS_S3_REGION_NAME = AWS_S3_REGION_NAME
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+    AWS_S3_CUSTOM_DOMAIN = (
+        AWS_S3_CUSTOM_DOMAIN
+        if AWS_S3_CUSTOM_DOMAIN
+        else f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+    )
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
     AWS_DEFAULT_ACL = "public-read"
+
+    # Static files configuration for S3
+    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
+    AWS_LOCATION = "static"  # Prefix for static files in S3
+
+    # Media files configuration for S3 (uses custom storage class with "media" prefix)
+    DEFAULT_FILE_STORAGE = "products_api.utils.MediaStorage"
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (

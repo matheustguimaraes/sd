@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from django.conf import settings
 from django.core.files.storage import default_storage
+from storages.backends.s3boto3 import S3Boto3Storage
 from products_api.environment_variables import (
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
@@ -17,6 +18,12 @@ from products_api.environment_variables import (
     RABBITMQ_QUEUE_NAME,
 )
 import pika
+
+
+class MediaStorage(S3Boto3Storage):
+    """Custom S3 storage class for media files."""
+    location = "media"
+    default_acl = "public-read"
 
 
 def get_s3_client():
