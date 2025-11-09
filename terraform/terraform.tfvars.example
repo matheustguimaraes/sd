@@ -1,0 +1,39 @@
+# AWS Configuration
+aws_region = "us-east-1"
+project_name = "mdcc-nuvem"
+environment = "production"
+
+# VPC Configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# RDS Configuration
+db_instance_class = "db.t3.micro"
+db_allocated_storage = 20
+db_name = "mdcc_sd_db"
+db_username = "postgres"
+db_password = "CHANGE_ME_SECURE_PASSWORD"  # Change this!
+
+# S3 Configuration
+s3_bucket_name = "mdcc-nuvem-images-UNIQUE_NAME"  # Must be globally unique
+
+# DynamoDB Configuration
+dynamodb_table_name = "crud_logs"
+
+# SQS Configuration
+sqs_queue_name = "image-processing-queue"
+
+# Auto Scaling Configuration
+min_instances = 1
+max_instances = 3
+desired_instances = 1
+instance_type = "t2.micro"
+
+# Auto Scaling Thresholds
+cpu_threshold_scale_up = 70
+cpu_threshold_scale_down = 25
+
+# AWS Credentials (for application use)
+aws_access_key_id = "YOUR_AWS_ACCESS_KEY_ID"
+aws_secret_access_key = "YOUR_AWS_SECRET_ACCESS_KEY"
+

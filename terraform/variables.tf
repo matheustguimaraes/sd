@@ -1,0 +1,125 @@
+variable "aws_region" {
+  description = "AWS region for resources"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+  default     = "mdcc-nuvem"
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "production"
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "availability_zones" {
+  description = "Availability zones for subnets"
+  type        = list(string)
+  default     = ["us-east-1a", "us-east-1b"]
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class (smallest)"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "RDS allocated storage in GB"
+  type        = number
+  default     = 20
+}
+
+variable "db_name" {
+  description = "PostgreSQL database name"
+  type        = string
+  default     = "mdcc_sd_db"
+}
+
+variable "db_username" {
+  description = "PostgreSQL master username"
+  type        = string
+  default     = "postgres"
+}
+
+variable "db_password" {
+  description = "PostgreSQL master password"
+  type        = string
+  sensitive   = true
+}
+
+variable "s3_bucket_name" {
+  description = "S3 bucket name for images"
+  type        = string
+}
+
+variable "dynamodb_table_name" {
+  description = "DynamoDB table name for logs"
+  type        = string
+  default     = "crud_logs"
+}
+
+variable "sqs_queue_name" {
+  description = "SQS queue name for image processing"
+  type        = string
+  default     = "image-processing-queue"
+}
+
+variable "min_instances" {
+  description = "Minimum number of instances in Auto Scaling Group"
+  type        = number
+  default     = 1
+}
+
+variable "max_instances" {
+  description = "Maximum number of instances in Auto Scaling Group"
+  type        = number
+  default     = 3
+}
+
+variable "desired_instances" {
+  description = "Desired number of instances in Auto Scaling Group"
+  type        = number
+  default     = 1
+}
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+  default     = "t2.micro"
+}
+
+variable "cpu_threshold_scale_up" {
+  description = "CPU threshold for scaling up (percentage)"
+  type        = number
+  default     = 70
+}
+
+variable "cpu_threshold_scale_down" {
+  description = "CPU threshold for scaling down (percentage)"
+  type        = number
+  default     = 25
+}
+
+variable "aws_access_key_id" {
+  description = "AWS Access Key ID for application"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_access_key" {
+  description = "AWS Secret Access Key for application"
+  type        = string
+  sensitive   = true
+}
+
