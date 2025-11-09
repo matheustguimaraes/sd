@@ -43,7 +43,7 @@ resource "aws_ecr_repository" "worker" {
   }
 }
 
-# Lifecycle Policy for Frontend (keep last 10 images)
+# Lifecycle Policy for Frontend (keep last 3 images for cost optimization)
 resource "aws_ecr_lifecycle_policy" "frontend" {
   repository = aws_ecr_repository.frontend.name
 
@@ -51,11 +51,11 @@ resource "aws_ecr_lifecycle_policy" "frontend" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last 10 images"
+        description  = "Keep last 3 images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = 10
+          countNumber = 3
         }
         action = {
           type = "expire"
@@ -65,7 +65,7 @@ resource "aws_ecr_lifecycle_policy" "frontend" {
   })
 }
 
-# Lifecycle Policy for Backend (keep last 10 images)
+# Lifecycle Policy for Backend (keep last 3 images for cost optimization)
 resource "aws_ecr_lifecycle_policy" "backend" {
   repository = aws_ecr_repository.backend.name
 
@@ -73,11 +73,11 @@ resource "aws_ecr_lifecycle_policy" "backend" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last 10 images"
+        description  = "Keep last 3 images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = 10
+          countNumber = 3
         }
         action = {
           type = "expire"
@@ -87,7 +87,7 @@ resource "aws_ecr_lifecycle_policy" "backend" {
   })
 }
 
-# Lifecycle Policy for Worker (keep last 10 images)
+# Lifecycle Policy for Worker (keep last 3 images for cost optimization)
 resource "aws_ecr_lifecycle_policy" "worker" {
   repository = aws_ecr_repository.worker.name
 
@@ -95,11 +95,11 @@ resource "aws_ecr_lifecycle_policy" "worker" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last 10 images"
+        description  = "Keep last 3 images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = 10
+          countNumber = 3
         }
         action = {
           type = "expire"

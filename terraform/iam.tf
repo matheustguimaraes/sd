@@ -124,7 +124,7 @@ resource "aws_iam_role_policy" "ecr_access" {
   })
 }
 
-# IAM Policy for CloudWatch (for Auto Scaling metrics and logs)
+# IAM Policy for CloudWatch (for Auto Scaling metrics)
 resource "aws_iam_role_policy" "cloudwatch_access" {
   name = "${var.project_name}-cloudwatch-access"
   role = aws_iam_role.ec2_role.id
@@ -140,20 +140,6 @@ resource "aws_iam_role_policy" "cloudwatch_access" {
           "cloudwatch:ListMetrics"
         ]
         Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogStreams"
-        ]
-        Resource = [
-          "${aws_cloudwatch_log_group.frontend.arn}:*",
-          "${aws_cloudwatch_log_group.backend.arn}:*",
-          "${aws_cloudwatch_log_group.worker.arn}:*"
-        ]
       }
     ]
   })

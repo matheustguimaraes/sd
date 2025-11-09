@@ -1,4 +1,5 @@
 # S3 Bucket for images
+# Note: Versioning is disabled for cost optimization (not required for assignment)
 resource "aws_s3_bucket" "images" {
   bucket = var.s3_bucket_name
 

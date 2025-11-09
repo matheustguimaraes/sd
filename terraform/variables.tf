@@ -35,9 +35,9 @@ variable "db_instance_class" {
 }
 
 variable "db_allocated_storage" {
-  description = "RDS allocated storage in GB"
+  description = "RDS allocated storage in GB (minimum 10GB for cost optimization)"
   type        = number
-  default     = 20
+  default     = 10
 }
 
 variable "db_name" {
@@ -145,5 +145,11 @@ variable "terraform_state_lock_table_name" {
   description = "DynamoDB table name for Terraform state locking"
   type        = string
   default     = "terraform-state-lock"
+}
+
+variable "key_pair_name" {
+  description = "Name of the AWS EC2 Key Pair to use for SSH access. Leave empty to disable SSH key configuration."
+  type        = string
+  default     = ""
 }
 

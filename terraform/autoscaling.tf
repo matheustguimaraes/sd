@@ -30,39 +30,6 @@ usermod -a -G docker ec2-user
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Install CloudWatch agent
-wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-rpm -U ./amazon-cloudwatch-agent.rpm
-
-# Create CloudWatch agent configuration for frontend
-cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'CONFIG'
-{
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/var/lib/docker/containers/*/*-json.log",
-            "log_group_name": "/${var.project_name}/frontend",
-            "log_stream_name": "{instance_id}-frontend",
-            "timezone": "UTC",
-            "multi_line_start_pattern": "{",
-            "encoding": "utf-8"
-          }
-        ]
-      }
-    }
-  }
-}
-CONFIG
-
-# Start CloudWatch agent
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-  -a fetch-config \
-  -m ec2 \
-  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
-  -s
-
 # Login to ECR using instance role
 aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
@@ -72,10 +39,6 @@ docker run -d \
   --name frontend \
   --restart unless-stopped \
   -p 3000:3000 \
-  --log-driver=awslogs \
-  --log-opt awslogs-group=/${var.project_name}/frontend \
-  --log-opt awslogs-region=${var.aws_region} \
-  --log-opt awslogs-stream-prefix=frontend \
   -e NEXT_PUBLIC_API_URL=${var.domain_name != "" ? (var.api_domain != "" ? "http://${var.api_domain}" : "http://api.${var.domain_name}") : "http://${aws_lb.main.dns_name}"} \
   ${aws_ecr_repository.frontend.repository_url}:latest
 
@@ -95,39 +58,6 @@ usermod -a -G docker ec2-user
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Install CloudWatch agent
-wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-rpm -U ./amazon-cloudwatch-agent.rpm
-
-# Create CloudWatch agent configuration for backend
-cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'CONFIG'
-{
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/var/lib/docker/containers/*/*-json.log",
-            "log_group_name": "/${var.project_name}/backend",
-            "log_stream_name": "{instance_id}-backend",
-            "timezone": "UTC",
-            "multi_line_start_pattern": "{",
-            "encoding": "utf-8"
-          }
-        ]
-      }
-    }
-  }
-}
-CONFIG
-
-# Start CloudWatch agent
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-  -a fetch-config \
-  -m ec2 \
-  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
-  -s
-
 # Login to ECR using instance role
 aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
@@ -137,10 +67,6 @@ docker run -d \
   --name backend \
   --restart unless-stopped \
   -p 8000:8000 \
-  --log-driver=awslogs \
-  --log-opt awslogs-group=/${var.project_name}/backend \
-  --log-opt awslogs-region=${var.aws_region} \
-  --log-opt awslogs-stream-prefix=backend \
   -e POSTGRES_HOST=${aws_db_instance.main.address} \
   -e POSTGRES_PORT=5432 \
   -e POSTGRES_DB=${var.db_name} \
@@ -172,39 +98,6 @@ usermod -a -G docker ec2-user
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Install CloudWatch agent
-wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-rpm -U ./amazon-cloudwatch-agent.rpm
-
-# Create CloudWatch agent configuration for worker
-cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'CONFIG'
-{
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/var/lib/docker/containers/*/*-json.log",
-            "log_group_name": "/${var.project_name}/worker",
-            "log_stream_name": "{instance_id}-worker",
-            "timezone": "UTC",
-            "multi_line_start_pattern": "{",
-            "encoding": "utf-8"
-          }
-        ]
-      }
-    }
-  }
-}
-CONFIG
-
-# Start CloudWatch agent
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-  -a fetch-config \
-  -m ec2 \
-  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
-  -s
-
 # Login to ECR using instance role
 aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
@@ -213,10 +106,6 @@ docker pull ${aws_ecr_repository.worker.repository_url}:latest
 docker run -d \
   --name worker \
   --restart unless-stopped \
-  --log-driver=awslogs \
-  --log-opt awslogs-group=/${var.project_name}/worker \
-  --log-opt awslogs-region=${var.aws_region} \
-  --log-opt awslogs-stream-prefix=worker \
   -e POSTGRES_HOST=${aws_db_instance.main.address} \
   -e POSTGRES_PORT=5432 \
   -e POSTGRES_DB=${var.db_name} \
@@ -244,6 +133,8 @@ resource "aws_launch_template" "frontend" {
 
   vpc_security_group_ids = [aws_security_group.frontend.id]
 
+  key_name = var.key_pair_name != "" ? var.key_pair_name : null
+
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_profile.name
   }
@@ -266,6 +157,8 @@ resource "aws_launch_template" "backend" {
 
   vpc_security_group_ids = [aws_security_group.backend.id]
 
+  key_name = var.key_pair_name != "" ? var.key_pair_name : null
+
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_profile.name
   }
@@ -287,6 +180,8 @@ resource "aws_launch_template" "worker" {
   instance_type = var.instance_type
 
   vpc_security_group_ids = [aws_security_group.worker.id]
+
+  key_name = var.key_pair_name != "" ? var.key_pair_name : null
 
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_profile.name

@@ -110,18 +110,4 @@ output "ecr_registry_url" {
   value       = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
 }
 
-output "cloudwatch_log_group_frontend" {
-  description = "CloudWatch log group name for frontend"
-  value       = aws_cloudwatch_log_group.frontend.name
-}
-
-output "cloudwatch_log_group_backend" {
-  description = "CloudWatch log group name for backend"
-  value       = aws_cloudwatch_log_group.backend.name
-}
-
-output "cloudwatch_log_group_worker" {
-  description = "CloudWatch log group name for worker"
-  value       = aws_cloudwatch_log_group.worker.name
-}
 
