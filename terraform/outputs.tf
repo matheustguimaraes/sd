@@ -110,4 +110,9 @@ output "ecr_registry_url" {
   value       = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
 }
 
+output "alb_zone_id" {
+  description = "ALB zone ID - needed for ALIAS records in Namecheap"
+  value       = aws_lb.main.zone_id
+}
+
 

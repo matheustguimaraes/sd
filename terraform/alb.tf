@@ -90,7 +90,7 @@ resource "aws_lb_listener_rule" "backend" {
   }
 }
 
-# ALB Listener Rule for Frontend (subdomain-based routing: domain.com)
+# ALB Listener Rule for Frontend (subdomain-based routing: www.domain.com)
 # Only create if domain_name is provided
 resource "aws_lb_listener_rule" "frontend" {
   count        = var.domain_name != "" ? 1 : 0
@@ -104,7 +104,7 @@ resource "aws_lb_listener_rule" "frontend" {
 
   condition {
     host_header {
-      values = [var.domain_name]
+      values = ["www.${var.domain_name}", var.domain_name]
     }
   }
 }
