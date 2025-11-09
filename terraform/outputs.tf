@@ -115,4 +115,19 @@ output "alb_zone_id" {
   value       = aws_lb.main.zone_id
 }
 
+output "alb_url" {
+  description = "ALB URL - Use this for testing or as a single CNAME in Namecheap"
+  value       = "http://${aws_lb.main.dns_name}"
+}
+
+output "frontend_url" {
+  description = "Frontend URL - Access your frontend at this URL"
+  value       = var.domain_name != "" ? "http://${var.domain_name}" : "http://${aws_lb.main.dns_name}"
+}
+
+output "backend_api_url" {
+  description = "Backend API URL - API endpoints are available at /api/*"
+  value       = var.domain_name != "" ? "http://${var.domain_name}/api" : "http://${aws_lb.main.dns_name}/api"
+}
+
 

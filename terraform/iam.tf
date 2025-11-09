@@ -145,6 +145,32 @@ resource "aws_iam_role_policy" "cloudwatch_access" {
   })
 }
 
+# IAM Policy for SSM (Systems Manager Session Manager)
+# This allows secure access to EC2 instances via AWS Systems Manager
+resource "aws_iam_role_policy" "ssm_access" {
+  name = "${var.project_name}-ssm-access"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+          "ssm:DescribeAssociation",
+          "ssm:ListAssociations",
+          "ssm:UpdateInstanceInformation"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "${var.project_name}-ec2-profile"

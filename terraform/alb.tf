@@ -23,12 +23,12 @@ resource "aws_lb_target_group" "frontend" {
   health_check {
     enabled             = true
     healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
+    unhealthy_threshold = 5
+    timeout             = 10
     interval            = 30
     path                = "/"
     protocol            = "HTTP"
-    matcher             = "200"
+    matcher             = "200,301,302"
   }
 
   tags = {
@@ -46,12 +46,12 @@ resource "aws_lb_target_group" "backend" {
   health_check {
     enabled             = true
     healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
+    unhealthy_threshold = 5
+    timeout             = 10
     interval            = 30
-    path                = "/"
+    path                = "/api/products/"
     protocol            = "HTTP"
-    matcher             = "200,404"
+    matcher             = "200,301,302,404"
   }
 
   tags = {
@@ -59,22 +59,22 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
-# ALB Listener (port 80)
+# ALB Listener (port 80) - Simplified path-based routing
 resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
   protocol          = "HTTP"
 
+  # Default action: route to frontend
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.frontend.arn
   }
 }
 
-# ALB Listener Rule for Backend API (subdomain-based routing: api.domain.com)
-# Only create if domain_name is provided
+# ALB Listener Rule for Backend API (path-based routing: /api/*)
+# This routes all /api/* requests to the backend
 resource "aws_lb_listener_rule" "backend" {
-  count        = var.domain_name != "" ? 1 : 0
   listener_arn = aws_lb_listener.main.arn
   priority     = 100
 
@@ -84,27 +84,8 @@ resource "aws_lb_listener_rule" "backend" {
   }
 
   condition {
-    host_header {
-      values = var.api_domain != "" ? [var.api_domain] : ["api.${var.domain_name}"]
-    }
-  }
-}
-
-# ALB Listener Rule for Frontend (subdomain-based routing: www.domain.com)
-# Only create if domain_name is provided
-resource "aws_lb_listener_rule" "frontend" {
-  count        = var.domain_name != "" ? 1 : 0
-  listener_arn = aws_lb_listener.main.arn
-  priority     = 200
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend.arn
-  }
-
-  condition {
-    host_header {
-      values = ["www.${var.domain_name}", var.domain_name]
+    path_pattern {
+      values = ["/api/*"]
     }
   }
 }

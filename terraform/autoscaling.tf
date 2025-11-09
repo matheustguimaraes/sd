@@ -18,51 +18,142 @@ data "aws_ami" "amazon_linux" {
 locals {
   frontend_user_data = <<-EOF
 #!/bin/bash
+set -e
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+echo "Starting frontend instance setup..."
+
 yum update -y
-yum install -y docker git aws-cli
+yum install -y docker git aws-cli amazon-ssm-agent
+
+# Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
+systemctl start amazon-ssm-agent
+systemctl enable amazon-ssm-agent
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
 
 # Start Docker
 systemctl start docker
 systemctl enable docker
 usermod -a -G docker ec2-user
 
+# Wait for Docker to be ready
+sleep 5
+
 # Install Docker Compose
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Login to ECR using instance role
-aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
+# Login to ECR using instance role (retry up to 3 times)
+for i in {1..3}; do
+  if aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com; then
+    echo "ECR login successful"
+    break
+  else
+    echo "ECR login attempt $i failed, retrying..."
+    sleep 5
+  fi
+done
 
-# Pull and run frontend container
-docker pull ${aws_ecr_repository.frontend.repository_url}:latest
+# Pull frontend container (retry up to 3 times)
+for i in {1..3}; do
+  if docker pull ${aws_ecr_repository.frontend.repository_url}:latest; then
+    echo "Frontend image pulled successfully"
+    break
+  else
+    echo "Docker pull attempt $i failed, retrying..."
+    sleep 10
+  fi
+done
+
+# Remove existing container if it exists
+docker rm -f frontend || true
+
+# Run frontend container
 docker run -d \
   --name frontend \
   --restart unless-stopped \
   -p 3000:3000 \
-  -e NEXT_PUBLIC_API_URL=${var.domain_name != "" ? (var.api_domain != "" ? "http://${var.api_domain}" : "http://api.${var.domain_name}") : "http://${aws_lb.main.dns_name}"} \
+  -e NEXT_PUBLIC_API_URL=${var.domain_name != "" ? "http://${var.domain_name}/api" : "http://${aws_lb.main.dns_name}/api"} \
   ${aws_ecr_repository.frontend.repository_url}:latest
+
+# Wait for container to be running
+echo "Waiting for frontend container to start..."
+for i in {1..30}; do
+  if docker ps | grep -q frontend; then
+    echo "Frontend container is running"
+    break
+  fi
+  echo "Waiting for frontend container... ($i/30)"
+  sleep 2
+done
+
+# Health check
+echo "Checking frontend container health..."
+sleep 10
+if curl -f http://localhost:3000 > /dev/null 2>&1; then
+  echo "Frontend health check passed"
+else
+  echo "Frontend health check failed, but continuing..."
+  docker logs frontend || true
+fi
+
+echo "Frontend setup completed"
 
 EOF
 
   backend_user_data = <<-EOF
 #!/bin/bash
+set -e
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+echo "Starting backend instance setup..."
+
 yum update -y
-yum install -y docker git aws-cli
+yum install -y docker git aws-cli amazon-ssm-agent curl
+
+# Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
+systemctl start amazon-ssm-agent
+systemctl enable amazon-ssm-agent
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
 
 # Start Docker
 systemctl start docker
 systemctl enable docker
 usermod -a -G docker ec2-user
 
+# Wait for Docker to be ready
+sleep 5
+
 # Install Docker Compose
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Login to ECR using instance role
-aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
+# Login to ECR using instance role (retry up to 3 times)
+for i in {1..3}; do
+  if aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com; then
+    echo "ECR login successful"
+    break
+  else
+    echo "ECR login attempt $i failed, retrying..."
+    sleep 5
+  fi
+done
 
-# Pull and run backend container
-docker pull ${aws_ecr_repository.backend.repository_url}:latest
+# Pull backend container (retry up to 3 times)
+for i in {1..3}; do
+  if docker pull ${aws_ecr_repository.backend.repository_url}:latest; then
+    echo "Backend image pulled successfully"
+    break
+  else
+    echo "Docker pull attempt $i failed, retrying..."
+    sleep 10
+  fi
+done
+
+# Remove existing container if it exists
+docker rm -f backend || true
+
+# Run backend container
 docker run -d \
   --name backend \
   --restart unless-stopped \
@@ -82,12 +173,45 @@ docker run -d \
   -e AWS_REGION=${var.aws_region} \
   ${aws_ecr_repository.backend.repository_url}:latest
 
+# Wait for container to be running
+echo "Waiting for backend container to start..."
+for i in {1..60}; do
+  if docker ps | grep -q backend; then
+    echo "Backend container is running"
+    break
+  fi
+  echo "Waiting for backend container... ($i/60)"
+  sleep 2
+done
+
+# Health check - wait for Django to be ready
+echo "Checking backend container health..."
+for i in {1..30}; do
+  if curl -f http://localhost:8000/ > /dev/null 2>&1 || curl -f http://localhost:8000/api/products/ > /dev/null 2>&1; then
+    echo "Backend health check passed"
+    break
+  fi
+  echo "Waiting for backend to be ready... ($i/30)"
+  sleep 5
+done
+
+# Show container logs for debugging
+echo "Backend container logs:"
+docker logs backend --tail 50 || true
+
+echo "Backend setup completed"
+
 EOF
 
   worker_user_data = <<-EOF
 #!/bin/bash
 yum update -y
-yum install -y docker git aws-cli
+yum install -y docker git aws-cli amazon-ssm-agent
+
+# Ensure SSM agent is installed and running (for AWS Systems Manager Session Manager)
+systemctl start amazon-ssm-agent
+systemctl enable amazon-ssm-agent
+systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
 
 # Start Docker
 systemctl start docker
@@ -203,7 +327,7 @@ resource "aws_autoscaling_group" "frontend" {
   vpc_zone_identifier = aws_subnet.public[*].id
   target_group_arns   = [aws_lb_target_group.frontend.arn]
   health_check_type   = "ELB"
-  health_check_grace_period = 300
+  health_check_grace_period = 600
 
   min_size         = var.min_instances
   max_size         = var.max_instances
@@ -227,7 +351,7 @@ resource "aws_autoscaling_group" "backend" {
   vpc_zone_identifier = aws_subnet.public[*].id
   target_group_arns   = [aws_lb_target_group.backend.arn]
   health_check_type   = "ELB"
-  health_check_grace_period = 300
+  health_check_grace_period = 600
 
   min_size         = var.min_instances
   max_size         = var.max_instances
