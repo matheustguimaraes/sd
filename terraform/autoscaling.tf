@@ -273,7 +273,7 @@ resource "aws_autoscaling_policy" "frontend_scale_up" {
   autoscaling_group_name = aws_autoscaling_group.frontend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = 1
-  cooldown               = 60
+  cooldown               = 300  # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
 # Auto Scaling Policy - Scale Down (Frontend)
@@ -282,7 +282,7 @@ resource "aws_autoscaling_policy" "frontend_scale_down" {
   autoscaling_group_name = aws_autoscaling_group.frontend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = -1
-  cooldown               = 60
+  cooldown               = 300  # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
 # CloudWatch Alarm - CPU High (Frontend)
@@ -327,7 +327,7 @@ resource "aws_autoscaling_policy" "backend_scale_up" {
   autoscaling_group_name = aws_autoscaling_group.backend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = 1
-  cooldown               = 60
+  cooldown               = 300  # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
 # Auto Scaling Policy - Scale Down (Backend)
@@ -336,7 +336,7 @@ resource "aws_autoscaling_policy" "backend_scale_down" {
   autoscaling_group_name = aws_autoscaling_group.backend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = -1
-  cooldown               = 60
+  cooldown               = 300  # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
 # CloudWatch Alarm - CPU High (Backend)
