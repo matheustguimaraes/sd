@@ -92,6 +92,38 @@ resource "aws_iam_role_policy" "sqs_access" {
   })
 }
 
+# IAM Policy for ECR access (to pull Docker images)
+resource "aws_iam_role_policy" "ecr_access" {
+  name = "${var.project_name}-ecr-access"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage"
+        ]
+        Resource = [
+          aws_ecr_repository.frontend.arn,
+          aws_ecr_repository.backend.arn,
+          aws_ecr_repository.worker.arn
+        ]
+      }
+    ]
+  })
+}
+
 # IAM Policy for CloudWatch (for Auto Scaling metrics)
 resource "aws_iam_role_policy" "cloudwatch_access" {
   name = "${var.project_name}-cloudwatch-access"

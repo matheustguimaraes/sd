@@ -177,3 +177,4 @@ terraform.rc
 *.bak
 
 *.md
+**/.terraform

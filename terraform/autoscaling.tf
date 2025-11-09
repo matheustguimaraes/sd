@@ -19,7 +19,7 @@ locals {
   frontend_user_data = <<-EOF
 #!/bin/bash
 yum update -y
-yum install -y docker git
+yum install -y docker git aws-cli
 
 # Start Docker
 systemctl start docker
@@ -30,26 +30,24 @@ usermod -a -G docker ec2-user
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Clone repository (you'll need to provide your repo URL)
-# git clone <your-repo-url> /opt/app
-# cd /opt/app
+# Login to ECR using instance role
+aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
-# For now, we'll use a simple approach - you'll need to build and push Docker images to ECR
-# Or use a different deployment method
-
-# Run frontend container
+# Pull and run frontend container
+docker pull ${aws_ecr_repository.frontend.repository_url}:latest
 docker run -d \
   --name frontend \
+  --restart unless-stopped \
   -p 3000:3000 \
   -e NEXT_PUBLIC_API_URL=http://${aws_lb.main.dns_name}/api \
-  <your-frontend-image>:latest
+  ${aws_ecr_repository.frontend.repository_url}:latest
 
 EOF
 
   backend_user_data = <<-EOF
 #!/bin/bash
 yum update -y
-yum install -y docker git
+yum install -y docker git aws-cli
 
 # Start Docker
 systemctl start docker
@@ -60,9 +58,14 @@ usermod -a -G docker ec2-user
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Run backend container
+# Login to ECR using instance role
+aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
+
+# Pull and run backend container
+docker pull ${aws_ecr_repository.backend.repository_url}:latest
 docker run -d \
   --name backend \
+  --restart unless-stopped \
   -p 8000:8000 \
   -e POSTGRES_HOST=${aws_db_instance.main.address} \
   -e POSTGRES_PORT=5432 \
@@ -77,14 +80,14 @@ docker run -d \
   -e DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
   -e SQS_QUEUE_URL=${aws_sqs_queue.image_processing.url} \
   -e AWS_REGION=${var.aws_region} \
-  <your-backend-image>:latest
+  ${aws_ecr_repository.backend.repository_url}:latest
 
 EOF
 
   worker_user_data = <<-EOF
 #!/bin/bash
 yum update -y
-yum install -y docker git
+yum install -y docker git aws-cli
 
 # Start Docker
 systemctl start docker
@@ -95,9 +98,14 @@ usermod -a -G docker ec2-user
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Run worker container
+# Login to ECR using instance role
+aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
+
+# Pull and run worker container
+docker pull ${aws_ecr_repository.worker.repository_url}:latest
 docker run -d \
   --name worker \
+  --restart unless-stopped \
   -e POSTGRES_HOST=${aws_db_instance.main.address} \
   -e POSTGRES_PORT=5432 \
   -e POSTGRES_DB=${var.db_name} \
@@ -111,7 +119,7 @@ docker run -d \
   -e DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
   -e SQS_QUEUE_URL=${aws_sqs_queue.image_processing.url} \
   -e AWS_REGION=${var.aws_region} \
-  <your-worker-image>:latest \
+  ${aws_ecr_repository.worker.repository_url}:latest \
   python manage.py process_images
 
 EOF

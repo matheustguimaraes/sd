@@ -90,3 +90,23 @@ output "worker_asg_name" {
   value       = aws_autoscaling_group.worker.name
 }
 
+output "ecr_frontend_repository_url" {
+  description = "ECR repository URL for frontend"
+  value       = aws_ecr_repository.frontend.repository_url
+}
+
+output "ecr_backend_repository_url" {
+  description = "ECR repository URL for backend"
+  value       = aws_ecr_repository.backend.repository_url
+}
+
+output "ecr_worker_repository_url" {
+  description = "ECR repository URL for worker"
+  value       = aws_ecr_repository.worker.repository_url
+}
+
+output "ecr_registry_url" {
+  description = "ECR registry URL"
+  value       = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+}
+
