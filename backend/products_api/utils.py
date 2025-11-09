@@ -24,6 +24,7 @@ class MediaStorage(S3Boto3Storage):
     """Custom S3 storage class for media files."""
     location = "media"
     default_acl = "public-read"
+    file_overwrite = False
 
 
 def get_s3_client():

@@ -8,6 +8,11 @@ from products_api.environment_variables import (
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
+    AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY,
+    AWS_STORAGE_BUCKET_NAME,
+    AWS_S3_REGION_NAME,
+    AWS_S3_CUSTOM_DOMAIN,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -110,18 +115,12 @@ if DEBUG:
     MEDIA_ROOT = BASE_DIR / "media"
     MEDIA_URL = "/media/"
 else:
-    # Use S3 for production
-    from products_api.environment_variables import (
-        AWS_ACCESS_KEY_ID,
-        AWS_SECRET_ACCESS_KEY,
-        AWS_STORAGE_BUCKET_NAME,
-        AWS_S3_REGION_NAME,
-        AWS_S3_CUSTOM_DOMAIN,
-    )
-
     # S3 configuration for both static and media files
-    AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY
+    # Only set credentials if provided, otherwise use IAM role
+    if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+        AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID
+        AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY
+    # If not set, boto3 will use IAM role from EC2 instance profile
     AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME
     AWS_S3_REGION_NAME = AWS_S3_REGION_NAME
     AWS_S3_CUSTOM_DOMAIN = (

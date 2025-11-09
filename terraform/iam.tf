@@ -34,7 +34,9 @@ resource "aws_iam_role_policy" "s3_access" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:PutObjectAcl",
+          "s3:GetObjectAcl"
         ]
         Resource = [
           aws_s3_bucket.images.arn,
