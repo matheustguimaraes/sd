@@ -74,44 +74,44 @@ export interface Profile {
 
 export const authApi = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
-    const response = await api.post("/auth/token/", { username, password });
+    const response = await api.post("/api/auth/token/", { username, password });
     return response.data;
   },
 
   register: async (data: RegisterData): Promise<{ message: string }> => {
-    const response = await api.post("/auth/register/", data);
+    const response = await api.post("/api/auth/register/", data);
     return response.data;
   },
 
   refreshToken: async (refresh: string): Promise<LoginResponse> => {
-    const response = await api.post("/auth/token/refresh/", { refresh });
+    const response = await api.post("/api/auth/token/refresh/", { refresh });
     return response.data;
   },
 };
 
 export const productsApi = {
   list: async (): Promise<Product[]> => {
-    const response = await api.get("/products/");
+    const response = await api.get("/api/products/");
     return response.data.results || response.data;
   },
 
   get: async (id: number): Promise<Product> => {
-    const response = await api.get(`/products/${id}/`);
+    const response = await api.get(`/api/products/${id}/`);
     return response.data;
   },
 
   create: async (data: Omit<Product, "id" | "created_at" | "updated_at">): Promise<Product> => {
-    const response = await api.post("/products/", data);
+    const response = await api.post("/api/products/", data);
     return response.data;
   },
 
   update: async (id: number, data: Partial<Product>): Promise<Product> => {
-    const response = await api.patch(`/products/${id}/`, data);
+    const response = await api.patch(`/api/products/${id}/`, data);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/products/${id}/`);
+    await api.delete(`/api/products/${id}/`);
   },
 
   uploadImage: async (id: number, file: File): Promise<{ message: string; s3_key: string; image_url: string }> => {
@@ -123,19 +123,19 @@ export const productsApi = {
         Authorization: `Bearer ${Cookies.get("access_token")}`,
       },
     });
-    const response = await uploadApi.post(`/products/${id}/upload-image/`, formData);
+    const response = await uploadApi.post(`/api/products/${id}/upload-image/`, formData);
     return response.data;
   },
 };
 
 export const profileApi = {
   get: async (): Promise<Profile> => {
-    const response = await api.get("/auth/profile/");
+    const response = await api.get("/api/auth/profile/");
     return response.data;
   },
 
   update: async (data: Partial<Profile>): Promise<Profile> => {
-    const response = await api.patch("/auth/profile/", data);
+    const response = await api.patch("/api/auth/profile/", data);
     return response.data;
   },
 };

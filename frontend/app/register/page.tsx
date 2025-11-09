@@ -24,8 +24,8 @@ export default function RegisterPage() {
       const loginResponse = await authApi.login(username, password);
       setAuthTokens(loginResponse.access, loginResponse.refresh);
       router.push("/feed");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Erro ao registrar");
+    } catch (err: unknown) {
+      setError(err as string || "Erro ao registrar");
     } finally {
       setLoading(false);
     }
@@ -39,10 +39,13 @@ export default function RegisterPage() {
           <p className="mt-2 text-black/70">Crie sua conta para começar</p>
         </div>
         <h2 className="mb-6 text-xl font-semibold text-black">Registrar</h2>
-        
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="username" className="text-sm font-medium text-black">
+            <label
+              htmlFor="username"
+              className="text-sm font-medium text-black"
+            >
               Usuário
             </label>
             <input
@@ -70,7 +73,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-sm font-medium text-black">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium text-black"
+            >
               Senha
             </label>
             <input
@@ -103,4 +109,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

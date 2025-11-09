@@ -3,7 +3,7 @@ import os
 
 POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5433")
 POSTGRES_DATABASE = os.environ.get("POSTGRES_DB", "mdcc_sd_db")
 POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "postgres")
 
