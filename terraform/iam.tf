@@ -124,27 +124,6 @@ resource "aws_iam_role_policy" "ecr_access" {
   })
 }
 
-# IAM Policy for CloudWatch (for Auto Scaling metrics)
-resource "aws_iam_role_policy" "cloudwatch_access" {
-  name = "${var.project_name}-cloudwatch-access"
-  role = aws_iam_role.ec2_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "cloudwatch:PutMetricData",
-          "cloudwatch:GetMetricStatistics",
-          "cloudwatch:ListMetrics"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
 # IAM Policy for SSM (Systems Manager Session Manager)
 # This allows secure access to EC2 instances via AWS Systems Manager
 resource "aws_iam_role_policy" "ssm_access" {

@@ -326,41 +326,6 @@ resource "aws_autoscaling_policy" "frontend_scale_down" {
   cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
-# CloudWatch Alarm - CPU High (Frontend)
-resource "aws_cloudwatch_metric_alarm" "frontend_cpu_high" {
-  alarm_name          = "${var.project_name}-frontend-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
-  period              = 60
-  statistic           = "Average"
-  threshold           = var.cpu_threshold_scale_up
-  alarm_description   = "This metric monitors frontend CPU utilization"
-  alarm_actions       = [aws_autoscaling_policy.frontend_scale_up.arn]
-
-  dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.frontend.name
-  }
-}
-
-# CloudWatch Alarm - CPU Low (Frontend)
-resource "aws_cloudwatch_metric_alarm" "frontend_cpu_low" {
-  alarm_name          = "${var.project_name}-frontend-cpu-low"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
-  period              = 60
-  statistic           = "Average"
-  threshold           = var.cpu_threshold_scale_down
-  alarm_description   = "This metric monitors frontend CPU utilization"
-  alarm_actions       = [aws_autoscaling_policy.frontend_scale_down.arn]
-
-  dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.frontend.name
-  }
-}
 
 # Auto Scaling Policy - Scale Up (Backend)
 resource "aws_autoscaling_policy" "backend_scale_up" {
@@ -380,39 +345,4 @@ resource "aws_autoscaling_policy" "backend_scale_down" {
   cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
 }
 
-# CloudWatch Alarm - CPU High (Backend)
-resource "aws_cloudwatch_metric_alarm" "backend_cpu_high" {
-  alarm_name          = "${var.project_name}-backend-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
-  period              = 60
-  statistic           = "Average"
-  threshold           = var.cpu_threshold_scale_up
-  alarm_description   = "This metric monitors backend CPU utilization"
-  alarm_actions       = [aws_autoscaling_policy.backend_scale_up.arn]
-
-  dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.backend.name
-  }
-}
-
-# CloudWatch Alarm - CPU Low (Backend)
-resource "aws_cloudwatch_metric_alarm" "backend_cpu_low" {
-  alarm_name          = "${var.project_name}-backend-cpu-low"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
-  period              = 60
-  statistic           = "Average"
-  threshold           = var.cpu_threshold_scale_down
-  alarm_description   = "This metric monitors backend CPU utilization"
-  alarm_actions       = [aws_autoscaling_policy.backend_scale_down.arn]
-
-  dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.backend.name
-  }
-}
 
