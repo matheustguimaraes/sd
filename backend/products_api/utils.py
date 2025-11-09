@@ -40,16 +40,11 @@ def get_s3_url(s3_key):
         backend_url = "http://localhost:8000"
         return f"{backend_url}{settings.MEDIA_URL}{s3_key}"
     else:
-        # S3: return presigned URL
-        try:
-            s3_client = get_s3_client()
-            return s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": AWS_STORAGE_BUCKET_NAME, "Key": s3_key},
-                ExpiresIn=3600,
-            )
-        except Exception:
-            # Fallback to public URL
+        # S3: return public URL (bucket is configured with public-read ACL)
+        # Use the custom domain if configured, otherwise use standard S3 URL
+        if hasattr(settings, 'AWS_S3_CUSTOM_DOMAIN') and settings.AWS_S3_CUSTOM_DOMAIN:
+            return f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}"
+        else:
             return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{s3_key}"
 
 

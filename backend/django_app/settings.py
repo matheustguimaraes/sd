@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+import os
 
 from products_api.environment_variables import (
     POSTGRES_DATABASE,
@@ -12,7 +13,7 @@ from products_api.environment_variables import (
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-mdcc-sd-dev-key-change-in-production"
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = ["*"]
 
