@@ -49,7 +49,7 @@ docker run -d \
 --name frontend \
 --restart unless-stopped \
 -p 3000:3000 \
---env NEXT_PUBLIC_API_URL=${var.api_domain} \
+--env NEXT_PUBLIC_API_URL=http://${aws_lb.main.dns_name}/api \
 ${aws_ecr_repository.frontend.repository_url}:latest
 
 echo "User-data script execution completed."

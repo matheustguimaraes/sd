@@ -24,17 +24,19 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("api/", include([
+        path("", include(router.urls)),
+        path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+        path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+        path("auth/register/", register_view, name="register"),
+        path("auth/profile/", profile_view, name="profile"),
+        path(
+            "swagger/",
+            schema_view.with_ui("swagger", cache_timeout=0),
+            name="schema-swagger-ui",
+        ),
+    ])),
     path("admin/", admin.site.urls),
-    path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("auth/register/", register_view, name="register"),
-    path("auth/profile/", profile_view, name="profile"),
-    path(
-        "swagger/",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-swagger-ui",
-    ),
 ]
 
 # Serve media files in development
