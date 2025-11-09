@@ -150,6 +150,12 @@ CORS_ALLOWED_ORIGINS = [
     "https://toggo.dev",
 ]
 
+# Allow CORS for any ALB domain (e.g., *.elb.amazonaws.com)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://.*\.elb\.amazonaws\.com$",
+    r"^https://.*\.elb\.amazonaws\.com$",
+]
+
 # Allow CORS for media files
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_HEADERS = [
