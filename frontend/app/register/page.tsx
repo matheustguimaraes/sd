@@ -25,8 +25,7 @@ export default function RegisterPage() {
       setAuthTokens(loginResponse.access, loginResponse.refresh);
       router.push("/feed");
     } catch (err: unknown) {
-      setError(err as string || "Erro ao registrar");
-    } finally {
+      console.log("🚀 ~ handleSubmit ~ err:", err);
       setLoading(false);
     }
   };
