@@ -1,7 +1,13 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+// Ensures the base URL always ends with /api
+const getApiBaseUrl = () => {
+  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  return url.endsWith("/api") ? url : `${url}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,6 +26,10 @@ api.interceptors.request.use((config) => {
       delete config.headers["Content-Type"];
       delete config.headers["content-type"];
     }
+  }
+  // Ensures the baseURL is being used correctly
+  if (config.url && !config.url.startsWith("http")) {
+    config.url = config.url.startsWith("/") ? config.url : `/${config.url}`;
   }
   return config;
 });
