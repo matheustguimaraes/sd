@@ -1,7 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
 import os
-import re
 
 from products_api.environment_variables import (
     POSTGRES_DATABASE,
@@ -177,13 +176,13 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://toggo.dev",
     "https://toggo.dev",
+    f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com",
+    f"http://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com",
 ]
 
-# Allow CSRF for any ALB domain
-CSRF_TRUSTED_ORIGINS.extend([
-    origin for origin in CORS_ALLOWED_ORIGINS
-    if re.match(r"^https?://.*\.elb\.amazonaws\.com$", origin)
-])
+if AWS_S3_CUSTOM_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{AWS_S3_CUSTOM_DOMAIN}")
+    CSRF_TRUSTED_ORIGINS.append(f"http://{AWS_S3_CUSTOM_DOMAIN}")
 
 # Allow CORS for media files
 CORS_ALLOW_CREDENTIALS = True

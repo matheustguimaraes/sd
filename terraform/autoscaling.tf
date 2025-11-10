@@ -99,6 +99,7 @@ docker run -d \
 --env AWS_STORAGE_BUCKET_NAME=${var.s3_bucket_name} \
 --env AWS_S3_CUSTOM_DOMAIN=${aws_s3_bucket.images.id}.s3.${var.aws_region}.amazonaws.com \
 --env AWS_S3_REGION_NAME=${var.aws_region} \
+--env AWS_ALB_DOMAIN=${aws_lb.main.dns_name} \
 --env DYNAMODB_REGION=${var.aws_region} \
 --env DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
 --env RABBITMQ_HOST=mdcc_sd_rabbitmq \
@@ -156,6 +157,7 @@ docker run -d \
 --env AWS_S3_REGION_NAME=${var.aws_region} \
 --env DYNAMODB_REGION=${var.aws_region} \
 --env DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
+--env AWS_ALB_DOMAIN=${aws_lb.main.dns_name} \
 --env RABBITMQ_HOST=mdcc_sd_rabbitmq \
 --env RABBITMQ_PORT=5672 \
 --env RABBITMQ_USER=admin \

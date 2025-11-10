@@ -126,13 +126,13 @@ variable "aws_secret_access_key" {
 variable "domain_name" {
   description = "Main domain name (e.g., example.com). Leave empty to use ALB DNS name directly."
   type        = string
-  default     = "toggo.dev"
+  default     = ""
 }
 
 variable "api_domain" {
-  description = "API subdomain (e.g., api.example.com). If empty, will use api.{domain_name}"
+  description = "API subdomain (e.g., api.example.com). If empty, will use {domain_name}/api"
   type        = string
-  default     = "toggo.dev/api"
+  default     = ""
 }
 
 variable "terraform_state_bucket_name" {
