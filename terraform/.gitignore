@@ -27,3 +27,6 @@ terraform.rc
 *.backup
 *.bak
 
+# Terraform plan artifacts
+tfplan
+
