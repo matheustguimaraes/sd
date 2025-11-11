@@ -116,12 +116,16 @@ export default function NewPostPage() {
       {uploading && (
         <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black/40 px-6">
           <div className="flex max-w-sm flex-col items-center gap-4 rounded-lg bg-white p-6 text-center shadow-lg">
-            <span className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" aria-hidden />
+            <span
+              className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent"
+              aria-hidden
+            />
             <p className="text-sm font-medium text-black">
               {statusMessage ?? "Processando..."}
             </p>
             <p className="text-xs text-black/60">
-              Você pode continuar navegando; a versão em preto e branco aparecerá assim que ficar pronta.
+              Você pode continuar navegando; a versão em preto e branco
+              aparecerá assim que ficar pronta.
             </p>
           </div>
         </div>

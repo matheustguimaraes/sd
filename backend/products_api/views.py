@@ -82,6 +82,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
+        # seleciona queryset compatível com a ação atual
+        if getattr(self, "action", None) == "register_bw_image":
+            return Product.objects.all()
         return Product.objects.filter(user=self.request.user)
 
     def list(self, request, *args, **kwargs):

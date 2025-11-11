@@ -12,7 +12,11 @@ export default function PostPage() {
   const router = useRouter();
   const postId = parseInt(params.id as string);
 
-  const { data: post, isLoading, refetch } = useQuery({
+  const {
+    data: post,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["products", postId],
     queryFn: () => productsApi.get(postId),
   });
@@ -57,7 +61,12 @@ export default function PostPage() {
           onClick={() => router.back()}
           className="text-black hover:text-black/70"
         >
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -74,7 +83,12 @@ export default function PostPage() {
           className="text-black hover:text-black/70"
           title="Perfil"
         >
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -101,7 +115,11 @@ export default function PostPage() {
             <figure className="overflow-hidden rounded-lg border border-black">
               <img
                 src={post.bw_image_url}
-                alt={post.name ? `${post.name} preto e branco` : "Post preto e branco"}
+                alt={
+                  post.name
+                    ? `${post.name} preto e branco`
+                    : "Post preto e branco"
+                }
                 className="w-full object-cover"
               />
               <figcaption className="border-t border-black bg-white px-4 py-2 text-center text-sm text-black">
@@ -117,56 +135,59 @@ export default function PostPage() {
               className="w-full object-cover"
             />
           </div>
-            ) : post.thumbnail_url ? (
+        ) : post.thumbnail_url ? (
           <div className="overflow-hidden rounded-lg border border-black">
-              <img
-                src={post.thumbnail_url}
-                alt={post.name || "Post"}
-                className="w-full object-cover"
-              />
+            <img
+              src={post.thumbnail_url}
+              alt={post.name || "Post"}
+              className="w-full object-cover"
+            />
           </div>
         ) : post.bw_image_url ? (
           <div className="overflow-hidden rounded-lg border border-black">
             <img
               src={post.bw_image_url}
-              alt={post.name ? `${post.name} preto e branco` : "Post preto e branco"}
+              alt={
+                post.name
+                  ? `${post.name} preto e branco`
+                  : "Post preto e branco"
+              }
               className="w-full object-cover"
             />
           </div>
-            ) : (
+        ) : (
           <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-black bg-white">
-                <svg
-                  className="h-16 w-16 text-black/30"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            )}
+            <svg
+              className="h-16 w-16 text-black/30"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+        )}
 
-            {post.description && (
+        {post.description && (
           <div className="rounded-lg border border-black p-4">
             <p className="whitespace-pre-wrap text-black">{post.description}</p>
-                {post.created_at && (
-                  <p className="mt-2 text-xs text-black/60">
-                    {new Date(post.created_at).toLocaleDateString("pt-BR", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                )}
-              </div>
+            {post.created_at && (
+              <p className="mt-2 text-xs text-black/60">
+                {new Date(post.created_at).toLocaleDateString("pt-BR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
             )}
           </div>
+        )}
+      </div>
     </PageLayout>
   );
 }
-
