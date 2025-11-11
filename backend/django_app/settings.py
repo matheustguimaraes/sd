@@ -1,6 +1,13 @@
 from datetime import timedelta
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+# Carrega variáveis do .env antes de importar environment_variables
+BASE_DIR = Path(__file__).resolve().parent.parent
+env_path = BASE_DIR / '.env'
+if env_path.exists():
+    load_dotenv(env_path, override=True)
 
 from products_api.environment_variables import (
     POSTGRES_DATABASE,
@@ -8,12 +15,8 @@ from products_api.environment_variables import (
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
-    AWS_STORAGE_BUCKET_NAME,
-    AWS_S3_REGION_NAME,
-    AWS_S3_CUSTOM_DOMAIN,
+    USE_S3,
 )
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-mdcc-sd-dev-key-change-in-production"
 DEBUG = os.environ.get("DEBUG", "true").lower() == "true"
@@ -104,35 +107,39 @@ USE_TZ = True
 STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Storage configuration
-if DEBUG:
-    # Use local filesystem storage for development
-    STATIC_URL = "static/"
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
-    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-    MEDIA_ROOT = BASE_DIR / "media"
-    MEDIA_URL = "/media/"
+STATIC_URL = "/staticfiles/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+
+
+MEDIA_URL = "/mediafiles/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
+AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")
+AWS_DEFAULT_ACL = None
+AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+# s3 static settings
+STATIC_LOCATION = "static"
+STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
+STATICFILES_STORAGE = "products_api.storage_backends.StaticStorage"
+# s3 public media settings
+PUBLIC_MEDIA_LOCATION = "media"
+
+
+if USE_S3:
+    # aws settings
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
+    DEFAULT_FILE_STORAGE = "products_api.storage_backends.PublicMediaStorage"
+    # s3 private media settings
+    PRIVATE_MEDIA_LOCATION = "private"
+    PRIVATE_FILE_STORAGE = "products_api.storage_backends.PrivateMediaStorage"
 else:
-    # S3 configuration for media files
-    # If not set, boto3 will use IAM role from EC2 instance profile
-    AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME
-    AWS_S3_REGION_NAME = AWS_S3_REGION_NAME
-    AWS_S3_CUSTOM_DOMAIN = (
-        AWS_S3_CUSTOM_DOMAIN
-        if AWS_S3_CUSTOM_DOMAIN
-        else f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
-    )
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    AWS_DEFAULT_ACL = "public-read"
+    MEDIA_URL = "/mediafiles/"
 
-    # Static files configuration for S3
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
-    AWS_LOCATION = "static"  # Prefix for static files in S3
-
-    # Media files configuration for S3 (uses custom storage class with "media" prefix)
-    DEFAULT_FILE_STORAGE = "products_api.utils.MediaStorage"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
@@ -157,18 +164,8 @@ REST_FRAMEWORK = {
     ],
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://toggo.dev",
-    "https://toggo.dev",
-]
-
-# Allow CORS for any ALB domain (e.g., *.elb.amazonaws.com)
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://.*\.elb\.amazonaws\.com$",
-    r"^https://.*\.elb\.amazonaws\.com$",
-]
+# Allow all origins for CORS
+CORS_ALLOW_ALL_ORIGINS = True
 
 # CSRF settings - exempt API endpoints since we use JWT authentication
 CSRF_TRUSTED_ORIGINS = [
@@ -176,13 +173,13 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://toggo.dev",
     "https://toggo.dev",
-    f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com",
-    f"http://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com",
+    f"https://{os.getenv('AWS_STORAGE_BUCKET_NAME')}.s3.{os.getenv('AWS_S3_REGION_NAME')}.amazonaws.com",
+    f"http://{os.getenv('AWS_STORAGE_BUCKET_NAME')}.s3.{os.getenv('AWS_S3_REGION_NAME')}.amazonaws.com",
 ]
 
-if AWS_S3_CUSTOM_DOMAIN:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{AWS_S3_CUSTOM_DOMAIN}")
-    CSRF_TRUSTED_ORIGINS.append(f"http://{AWS_S3_CUSTOM_DOMAIN}")
+if os.getenv("AWS_S3_CUSTOM_DOMAIN"):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.getenv('AWS_S3_CUSTOM_DOMAIN')}")
+    CSRF_TRUSTED_ORIGINS.append(f"http://{os.getenv('AWS_S3_CUSTOM_DOMAIN')}")
 
 # Allow CORS for media files
 CORS_ALLOW_CREDENTIALS = True

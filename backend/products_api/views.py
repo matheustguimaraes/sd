@@ -6,6 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
+from products_api.environment_variables import AWS_STORAGE_BUCKET_NAME, USE_S3
 from products_api.models import Product, Profile
 from products_api.serializers import ProductSerializer, ProfileSerializer
 from products_api.utils import (
@@ -17,6 +18,32 @@ from products_api.utils import (
 
 import uuid
 from datetime import datetime
+
+from django.core.files.storage import FileSystemStorage
+from django.shortcuts import render
+
+from products_api.models import Upload, UploadPrivate
+
+
+def image_upload(request):
+    if request.method == "POST":
+        image_file = request.FILES["image_file"]
+        image_type = request.POST["image_type"]
+        # Verifica se S3 está configurado corretamente (bucket name não vazio)
+        if USE_S3 and AWS_STORAGE_BUCKET_NAME:
+            if image_type == "private":
+                upload = UploadPrivate(file=image_file)
+            else:
+                upload = Upload(file=image_file)
+            upload.save()
+            image_url = upload.file.url
+        else:
+            # Usa armazenamento local se S3 não estiver configurado
+            fs = FileSystemStorage()
+            filename = fs.save(image_file.name, image_file)
+            image_url = fs.url(filename)
+        return render(request, "upload.html", {"image_url": image_url})
+    return render(request, "upload.html")
 
 
 @method_decorator(csrf_exempt, name="dispatch")

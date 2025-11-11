@@ -153,3 +153,9 @@ variable "key_pair_name" {
   default     = "mdcc-nuvem-key-pair"
 }
 
+variable "create_app_user" {
+  description = "Whether to create an IAM user for local development. Requires IAM:CreateUser permission. Set to false if your terraform user doesn't have IAM permissions."
+  type        = bool
+  default     = false
+}
+

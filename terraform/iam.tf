@@ -35,6 +35,7 @@ resource "aws_iam_role_policy" "s3_access" {
           "s3:PutObject",
           "s3:DeleteObject",
           "s3:ListBucket",
+          "s3:HeadObject",
           "s3:PutObjectAcl",
           "s3:GetObjectAcl"
         ]
@@ -160,5 +161,102 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   tags = {
     Name = "${var.project_name}-ec2-profile"
   }
+}
+
+# IAM User for local development (optional - for testing outside EC2)
+# NOTE: This requires IAM permissions. If your terraform user doesn't have IAM:CreateUser,
+# you can create the user manually in AWS Console or skip this section.
+# To skip: set create_app_user = false in terraform.tfvars
+resource "aws_iam_user" "app_user" {
+  count = var.create_app_user ? 1 : 0
+  name  = "${var.project_name}-app-user"
+  path  = "/"
+
+  tags = {
+    Name    = "${var.project_name}-app-user"
+    Purpose = "Local development and testing"
+  }
+}
+
+# IAM Policy for app user (same permissions as EC2 role for S3, DynamoDB, SQS)
+resource "aws_iam_user_policy" "app_user_s3" {
+  count = var.create_app_user ? 1 : 0
+  name  = "${var.project_name}-app-user-s3"
+  user  = aws_iam_user.app_user[0].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+          "s3:HeadObject",
+          "s3:PutObjectAcl",
+          "s3:GetObjectAcl"
+        ]
+        Resource = [
+          aws_s3_bucket.images.arn,
+          "${aws_s3_bucket.images.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user_policy" "app_user_dynamodb" {
+  count = var.create_app_user ? 1 : 0
+  name  = "${var.project_name}-app-user-dynamodb"
+  user  = aws_iam_user.app_user[0].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Resource = aws_dynamodb_table.crud_logs.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user_policy" "app_user_sqs" {
+  count = var.create_app_user ? 1 : 0
+  name  = "${var.project_name}-app-user-sqs"
+  user  = aws_iam_user.app_user[0].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:GetQueueUrl"
+        ]
+        Resource = aws_sqs_queue.image_processing.arn
+      }
+    ]
+  })
+}
+
+# IAM Access Key for app user (output the secret in terraform output)
+resource "aws_iam_access_key" "app_user" {
+  count = var.create_app_user ? 1 : 0
+  user  = aws_iam_user.app_user[0].name
 }
 

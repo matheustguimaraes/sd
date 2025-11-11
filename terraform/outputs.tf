@@ -130,4 +130,19 @@ output "backend_api_url" {
   value       = var.domain_name != "" ? "http://${var.domain_name}/api" : "http://${aws_lb.main.dns_name}/api"
 }
 
+output "app_user_access_key_id" {
+  description = "IAM User Access Key ID for local development"
+  value       = var.create_app_user ? aws_iam_access_key.app_user[0].id : null
+}
+
+output "app_user_secret_access_key" {
+  description = "IAM User Secret Access Key for local development"
+  value       = var.create_app_user ? aws_iam_access_key.app_user[0].secret : null
+  sensitive   = true
+}
+
+output "app_user_name" {
+  description = "IAM User name for local development"
+  value       = var.create_app_user ? aws_iam_user.app_user[0].name : null
+}
 
