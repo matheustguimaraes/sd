@@ -59,7 +59,7 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
-# ALB Listener (port 80) - Simplified path-based routing
+# ALB Listener (port 80) - Path-based routing
 resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -73,8 +73,6 @@ resource "aws_lb_listener" "main" {
 }
 
 # ALB Listener Rule for Backend API (path-based routing: /api/*)
-# This routes all /api/* requests to the backend
-# Priority 1 ensures this rule is evaluated before the default action
 resource "aws_lb_listener_rule" "backend" {
   listener_arn = aws_lb_listener.main.arn
   priority     = 1

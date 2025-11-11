@@ -151,6 +151,23 @@ backend/*/staticfiles/
 # Local .tfvars files
 *.tfvars
 !terraform.tfvars.example
+**tf
+**terraform.tfstate
+**terraform.tfstate.backup
+**terraform.tfstate.lock
+**terraform.tfstate.lock.backup
+**terraform.tfstate.lock.backup.lock
+**terraform.tfstate.lock.backup.lock.backup
+**terraform.tfstate.lock.backup.lock.backup.backup
+**terraform.tfstate.lock.backup.lock.backup.backup.backup
+**/**tfplan
+**/**tfplan.json
+**/**tfplan.json.backup
+**/**tfplan.json.lock
+**/**tfplan.json.lock.backup
+**/**tfplan.json.lock.backup.lock
+**/**tfplan.json.lock.backup.lock.backup
+**/**tfplan.json.lock.backup.lock.backup.backup
 
 # Crash log files
 crash.log

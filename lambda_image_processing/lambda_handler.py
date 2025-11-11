@@ -57,14 +57,14 @@ def fetch_image_from_s3(original_key: str):
     last_error = None
     for candidate in candidate_keys:
         try:
-            print(f"Tentando baixar chave: {candidate}")
+            print(f"fetch_image_from_s3 Trying to fetch image from S3: {candidate}")
             response = s3_client.get_object(Bucket=s3_bucket_name, Key=candidate)
             image_bytes = response["Body"].read()
             return candidate, image_bytes
         except ClientError as error:
             error_code = error.response.get("Error", {}).get("Code")
             if error_code in ("NoSuchKey", "404"):
-                print(f"Chave não encontrada: {candidate}")
+                print(f"fetch_image_from_s3 Image not found in S3: {candidate}")
                 last_error = error
                 continue
             raise
@@ -74,19 +74,19 @@ def fetch_image_from_s3(original_key: str):
 
 def process_image(s3_key, product_id):
     try:
-        print(f"Processando imagem: {s3_key}")
+        print(f"process_image Processing image: {s3_key}")
 
         resolved_key, image_data = fetch_image_from_s3(s3_key)
-        print(f"Resolved key: {resolved_key}")
+        print(f"process_image Resolved key: {resolved_key}")
 
         image = Image.open(BytesIO(image_data))
-        print(f"Image: {image}")
+        print(f"process_image Image: {image}")
 
         bw_image = image.convert("L")
-        print(f"BW Image: {bw_image}")
+        print(f"process_image BW Image: {bw_image}")
 
         bw_image_rgb = bw_image.convert("RGB")
-        print(f"BW Image RGB: {bw_image_rgb}")
+        print(f"process_image BW Image RGB: {bw_image_rgb}")
 
         output_buffer = BytesIO()
         format_ext = image.format if image.format else "JPEG"
@@ -95,13 +95,13 @@ def process_image(s3_key, product_id):
 
         bw_image_rgb.save(output_buffer, format=format_ext, quality=95)
         output_buffer.seek(0)
-        print(f"Output buffer: {output_buffer}")
+        print(f"process_image Output buffer: {output_buffer}")
 
         # Generate the S3 key for the processed image
         base_key = resolved_key.rsplit(".", 1)[0] if "." in resolved_key else resolved_key
         extension = resolved_key.rsplit(".", 1)[1] if "." in resolved_key else "jpg"
         bw_s3_key = f"{base_key}_bw.{extension}"
-        print(f"BW S3 Key: {bw_s3_key}")
+        print(f"process_image BW S3 Key: {bw_s3_key}")
 
         # Faz upload da imagem processada para o S3
         s3_client.put_object(
@@ -111,7 +111,7 @@ def process_image(s3_key, product_id):
             ContentType=f"image/{format_ext.lower()}",
         )
 
-        print(f"Processed image saved in: {bw_s3_key}")
+        print(f"process_image Processed image saved in: {bw_s3_key}")
 
         if product_id:
             register_bw_image(product_id, bw_s3_key)
@@ -125,7 +125,7 @@ def process_image(s3_key, product_id):
 
 
 def register_bw_image(product_id, bw_s3_key):
-    print(f"register_bw_image Registering black and white image for post {product_id} with key {bw_s3_key}")
+    print(f"process_image Registering black and white image for post {product_id} with key {bw_s3_key}")
 
     if not backend_api_url:
         print("BACKEND_API_URL not configured, skipping notification")
@@ -135,7 +135,7 @@ def register_bw_image(product_id, bw_s3_key):
         return
 
     endpoint = f"{backend_api_url.rstrip('/')}/posts/{product_id}/register-bw-image/"
-    print(f"register_bw_image Endpoint: {endpoint}")
+    print(f"process_image Endpoint: {endpoint}")
 
     try:
         response = requests.post(

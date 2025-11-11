@@ -7,14 +7,14 @@ resource "aws_sns_topic" "image_processing" {
   }
 }
 
-# SNS Topic Subscription to SQS Queue
+# SNS Topic Subscription
 resource "aws_sns_topic_subscription" "sqs_subscription" {
   topic_arn = aws_sns_topic.image_processing.arn
   protocol  = "sqs"
   endpoint  = aws_sqs_queue.image_processing.arn
 }
 
-# SQS Queue Policy to allow SNS to send messages
+# SQS Queue Policy
 resource "aws_sqs_queue_policy" "image_processing" {
   queue_url = aws_sqs_queue.image_processing.id
 

@@ -22,6 +22,7 @@ resource "aws_internet_gateway" "main" {
 resource "aws_subnet" "public" {
   count             = length(var.availability_zones)
   vpc_id            = aws_vpc.main.id
+  # 8 is the default for public subnets
   cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index)
   availability_zone = var.availability_zones[count.index]
 

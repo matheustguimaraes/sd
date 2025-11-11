@@ -1,5 +1,4 @@
 # S3 Bucket for images
-# Note: Versioning is disabled for cost optimization (not required for assignment)
 resource "aws_s3_bucket" "images" {
   bucket = var.s3_bucket_name
 
@@ -8,7 +7,7 @@ resource "aws_s3_bucket" "images" {
   }
 }
 
-# S3 Bucket Ownership Controls (required for ACLs)
+# S3 Bucket Ownership Controls
 resource "aws_s3_bucket_ownership_controls" "images" {
   bucket = aws_s3_bucket.images.id
 
@@ -17,7 +16,7 @@ resource "aws_s3_bucket_ownership_controls" "images" {
   }
 }
 
-# S3 Bucket Public Access Block (adjust as needed)
+# S3 Bucket Public Access Block
 resource "aws_s3_bucket_public_access_block" "images" {
   bucket = aws_s3_bucket.images.id
 
@@ -33,16 +32,18 @@ resource "aws_s3_bucket_public_access_block" "images" {
 resource "aws_s3_bucket_cors_configuration" "images" {
   bucket = aws_s3_bucket.images.id
 
+  # Allow all methods and headers
+  # max age means the browser will cache the response for 30 days
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
     allowed_origins = ["*"]
     expose_headers  = ["ETag"]
-    max_age_seconds = 2592000  # 30 dias (30 * 24 * 60 * 60)
+    max_age_seconds = 2592000  # 30 days (30 * 24 * 60 * 60)
   }
 }
 
-# S3 Bucket Policy for Public Read Access
+# S3 Bucket Policy
 resource "aws_s3_bucket_policy" "images" {
   bucket = aws_s3_bucket.images.id
 

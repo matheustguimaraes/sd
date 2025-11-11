@@ -43,7 +43,7 @@ resource "aws_ecr_repository" "worker" {
   }
 }
 
-# Lifecycle Policy for Frontend (keep last 3 images for cost optimization)
+# Lifecycle Policy for Frontend (3 images retention)
 resource "aws_ecr_lifecycle_policy" "frontend" {
   repository = aws_ecr_repository.frontend.name
 
@@ -65,7 +65,7 @@ resource "aws_ecr_lifecycle_policy" "frontend" {
   })
 }
 
-# Lifecycle Policy for Backend (keep last 3 images for cost optimization)
+# Lifecycle Policy for Backend (3 images retention)
 resource "aws_ecr_lifecycle_policy" "backend" {
   repository = aws_ecr_repository.backend.name
 
@@ -87,7 +87,7 @@ resource "aws_ecr_lifecycle_policy" "backend" {
   })
 }
 
-# Lifecycle Policy for Worker (keep last 3 images for cost optimization)
+# Lifecycle Policy for Worker (3 images retention)
 resource "aws_ecr_lifecycle_policy" "worker" {
   repository = aws_ecr_repository.worker.name
 

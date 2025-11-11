@@ -182,7 +182,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   }
 }
 
-# IAM User for local development (optional - for testing outside EC2)
+# IAM User for local development (for testing outside EC2)
 resource "aws_iam_user" "app_user" {
   count = var.create_app_user ? 1 : 0
   name  = "${var.project_name}-app-user"

@@ -262,6 +262,7 @@ resource "aws_autoscaling_group" "frontend" {
   vpc_zone_identifier       = aws_subnet.public[*].id
   target_group_arns         = [aws_lb_target_group.frontend.arn]
   health_check_type         = "ELB"
+  # 600 seconds is 10 minutes
   health_check_grace_period = 600
 
   min_size         = var.min_instances
