@@ -1,13 +1,11 @@
 import boto3
 import json
 from datetime import datetime
-from django.conf import settings
 from django.core.files.storage import default_storage
 from storages.backends.s3boto3 import S3Boto3Storage
 from products_api.environment_variables import (
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
-    AWS_STORAGE_BUCKET_NAME,
     AWS_S3_REGION_NAME,
     DYNAMODB_REGION,
     DYNAMODB_TABLE_NAME,
@@ -16,8 +14,10 @@ from products_api.environment_variables import (
     RABBITMQ_USER,
     RABBITMQ_PASSWORD,
     RABBITMQ_QUEUE_NAME,
+    DEBUG_MODE,
 )
 import pika
+from products_api.storage_backends import PrivateMediaStorage
 
 
 class MediaStorage(S3Boto3Storage):
@@ -38,33 +38,26 @@ def get_s3_client():
 
 
 def get_s3_url(s3_key):
-    """Get URL for a file (works with local storage and S3)."""
+    """Gera signed URL para arquivo privado no S3."""
     if not s3_key:
         return None
 
-    if settings.DEBUG:
-        # Local storage: return absolute media URL pointing to backend
-        # Frontend needs to access backend URLs directly
-        backend_url = "http://localhost:8000"
-        return f"{backend_url}{settings.MEDIA_URL}{s3_key}"
-    else:
-        # S3: return public URL (bucket is configured with public-read ACL)
-        # Use the custom domain if configured, otherwise use standard S3 URL
-        if hasattr(settings, 'AWS_S3_CUSTOM_DOMAIN') and settings.AWS_S3_CUSTOM_DOMAIN:
-            return f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}"
-        else:
-            return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{s3_key}"
+    if not s3_key.startswith('private/'):
+        s3_key = f"private/{s3_key}"
+
+    storage = PrivateMediaStorage()
+    real_key = s3_key.replace('private/', '', 1)
+    return storage.url(real_key)
 
 
 def upload_to_s3(file, s3_key):
-    """Upload file using Django's default storage (handles local/S3 automatically)."""
-    default_storage.save(s3_key, file)
-    return s3_key
+    """Faz upload usando Django default storage."""
+    return default_storage.save(s3_key, file)
 
 
 def log_crud_action(action_type, model_name, data, user_id=None):
     """Log CRUD action to DynamoDB (only when DEBUG=False)."""
-    if settings.DEBUG:
+    if DEBUG_MODE:
         return  # Skip logging in development
 
     try:
@@ -93,7 +86,7 @@ def log_crud_action(action_type, model_name, data, user_id=None):
 
 def log_request_info(ip_address, user_id, username, path=None, method=None):
     """Log request information to DynamoDB (only when DEBUG=False)."""
-    if settings.DEBUG:
+    if DEBUG_MODE:
         return  # Skip logging in development
 
     try:

@@ -6,35 +6,28 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from products_api.environment_variables import AWS_STORAGE_BUCKET_NAME, USE_S3
+from products_api.environment_variables import USE_S3
 from products_api.models import Product, Profile
 from products_api.serializers import ProductSerializer, ProfileSerializer
 from products_api.utils import (
-    upload_to_s3,
     log_crud_action,
-    get_s3_url,
     publish_to_rabbitmq,
 )
 
-import uuid
 from datetime import datetime
 
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render
 
-from products_api.models import Upload, UploadPrivate
+from products_api.models import UploadPrivate
 
 
 def image_upload(request):
     if request.method == "POST":
         image_file = request.FILES["image_file"]
-        image_type = request.POST["image_type"]
         # Verifica se S3 está configurado corretamente (bucket name não vazio)
-        if USE_S3 and AWS_STORAGE_BUCKET_NAME:
-            if image_type == "private":
-                upload = UploadPrivate(file=image_file)
-            else:
-                upload = Upload(file=image_file)
+        if USE_S3:
+            upload = UploadPrivate(file=image_file)
             upload.save()
             image_url = upload.file.url
         else:
@@ -118,17 +111,19 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         image_file = request.FILES["image"]
 
-        s3_key = f"products/{product.id}/{uuid.uuid4()}_{image_file.name}"
-
         try:
-            upload_to_s3(image_file, s3_key)
-            product.image_s3_key = s3_key
+            # Usa UploadPrivate para armazenar imagens de forma privada
+            upload = UploadPrivate(file=image_file)
+            upload.save()
+
+            # Salva a chave S3 no produto (o file.name já inclui o location prefix se usar S3)
+            product.image_s3_key = upload.file.name
             product.save()
 
             message = {
                 "action": "process_image",
                 "product_id": product.id,
-                "s3_key": s3_key,
+                "s3_key": upload.file.name,
                 "timestamp": datetime.now().isoformat(),
             }
             publish_to_rabbitmq(message)
@@ -136,15 +131,15 @@ class ProductViewSet(viewsets.ModelViewSet):
             log_crud_action(
                 action_type="UPDATE",
                 model_name="Product",
-                data={"id": product.id, "action": "image_upload", "s3_key": s3_key},
+                data={"id": product.id, "action": "image_upload", "s3_key": upload.file.name},
                 user_id=request.user.id,
             )
 
             return Response(
                 {
                     "message": "Imagem enviada com sucesso",
-                    "s3_key": s3_key,
-                    "image_url": get_s3_url(s3_key),
+                    "s3_key": upload.file.name,
+                    "image_url": upload.file.url,
                 },
                 status=status.HTTP_200_OK,
             )

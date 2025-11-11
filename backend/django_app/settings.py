@@ -10,6 +10,7 @@ if env_path.exists():
     load_dotenv(env_path, override=True)
 
 from products_api.environment_variables import (
+    DEBUG_MODE,
     POSTGRES_DATABASE,
     POSTGRES_HOST,
     POSTGRES_PASSWORD,
@@ -19,7 +20,7 @@ from products_api.environment_variables import (
 )
 
 SECRET_KEY = "django-insecure-mdcc-sd-dev-key-change-in-production"
-DEBUG = os.environ.get("DEBUG", "true").lower() == "true"
+DEBUG = DEBUG_MODE
 
 ALLOWED_HOSTS = ["*"]
 

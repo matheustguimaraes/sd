@@ -38,7 +38,7 @@ resource "aws_s3_bucket_cors_configuration" "images" {
     allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
     allowed_origins = ["*"]
     expose_headers  = ["ETag"]
-    max_age_seconds = 3000
+    max_age_seconds = 2592000  # 30 dias (30 * 24 * 60 * 60)
   }
 }
 

@@ -23,3 +23,5 @@ RABBITMQ_USER = os.environ.get("RABBITMQ_USER", "admin")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "admin")
 RABBITMQ_QUEUE_NAME = os.environ.get("RABBITMQ_QUEUE_NAME", "image-processing-queue")
 USE_S3 = os.environ.get("USE_S3", "true").upper() == "TRUE"
+
+DEBUG_MODE = os.environ.get("DEBUG", "true").upper() == "TRUE"
