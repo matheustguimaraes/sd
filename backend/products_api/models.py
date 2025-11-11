@@ -7,16 +7,18 @@ from products_api.storage_backends import PublicMediaStorage, PrivateMediaStorag
 class Upload(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     file = models.FileField(storage=PublicMediaStorage())
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class UploadPrivate(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     file = models.FileField(storage=PrivateMediaStorage())
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class Profile(models.Model):
-    """User profile with additional information."""
-
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

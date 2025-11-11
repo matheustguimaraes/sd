@@ -26,16 +26,20 @@ from products_api.models import UploadPrivate
 def image_upload(request):
     if request.method == "POST":
         image_file = request.FILES["image_file"]
-        # Verifica se S3 está configurado corretamente (bucket name não vazio)
+
         if USE_S3:
             upload = UploadPrivate(file=image_file)
             upload.save()
             image_url = upload.file.url
+            print(f"image_upload image_url: {image_url}")
+            print(f"image_upload upload: {upload}")
         else:
-            # Usa armazenamento local se S3 não estiver configurado
             fs = FileSystemStorage()
             filename = fs.save(image_file.name, image_file)
             image_url = fs.url(filename)
+            print(f"image_upload image_url: {image_url}")
+            print(f"image_upload filename: {filename}")
+
         return render(request, "upload.html", {"image_url": image_url})
     return render(request, "upload.html")
 
@@ -103,23 +107,26 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="upload-image")
     def upload_image(self, request, pk=None):
         product: Product = self.get_object()
+        print(f"upload_image product: {product}")
 
-        if "image" not in request.FILES:  # pyright: ignore[reportUnreachable]
+        if "image" not in request.FILES:
+            print(f"upload_image error: No image provided")
             return Response(
-                {"error": "Nenhuma imagem fornecida"},
+                {"error": "No image provided"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         image_file = request.FILES["image"]
+        print(f"upload_image image_file: {image_file}")
 
         try:
-            # Usa UploadPrivate para armazenar imagens de forma privada
             upload = UploadPrivate(file=image_file)
             upload.save()
+            print(f"upload_image upload: {upload}")
 
-            # Salva a chave S3 no produto (o file.name já inclui o location prefix se usar S3)
             product.image_s3_key = upload.file.name
             product.save()
+            print(f"upload_image product saved: {product}")
 
             message = {
                 "action": "process_image",
@@ -128,6 +135,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 "timestamp": datetime.now().isoformat(),
             }
             publish_to_sns(message)
+            print(f"upload_image message published: {message}")
 
             log_crud_action(
                 action_type="UPDATE",
@@ -154,41 +162,47 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], permission_classes=[AllowAny], url_path="register-bw-image")
     def register_bw_image(self, request, pk=None):
-        """Registra no banco a chave P&B enviada pela Lambda."""
-        service_token = request.headers.get("X-Service-Token", "")
-        if not SERVICE_API_TOKEN or service_token != SERVICE_API_TOKEN:
-            return Response(
-                {"error": "Acesso não autorizado"},
-                status=status.HTTP_403_FORBIDDEN,
+        try:
+            service_token = request.headers.get("X-Service-Token", "")
+            if not SERVICE_API_TOKEN or service_token != SERVICE_API_TOKEN:
+                return Response(
+                    {"error": "Acesso não autorizado"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            image_bw_s3_key = request.data.get("image_bw_s3_key")
+            if not image_bw_s3_key:
+                return Response(
+                    {"error": "Campo image_bw_s3_key é obrigatório"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            product: Product = self.get_object()
+            product.image_bw_s3_key = image_bw_s3_key
+            product.save(update_fields=["image_bw_s3_key"])
+
+            log_crud_action(
+                action_type="UPDATE",
+                model_name="Product",
+                data={"id": product.id, "action": "image_bw_registered", "s3_key": image_bw_s3_key},
+                user_id=self.request.user.id if self.request.user.is_authenticated else None,
             )
 
-        image_bw_s3_key = request.data.get("image_bw_s3_key")
-        if not image_bw_s3_key:
+            serializer = self.get_serializer(product)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error registering black and white image: {str(e)}")
+            traceback.print_exc()
             return Response(
-                {"error": "Campo image_bw_s3_key é obrigatório"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": f"Error registering black and white image: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        product: Product = self.get_object()
-        product.image_bw_s3_key = image_bw_s3_key
-        product.save(update_fields=["image_bw_s3_key"])
-
-        log_crud_action(
-            action_type="UPDATE",
-            model_name="Product",
-            data={"id": product.id, "action": "image_bw_registered", "s3_key": image_bw_s3_key},
-            user_id=self.request.user.id if self.request.user.is_authenticated else None,
-        )
-
-        serializer = self.get_serializer(product)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @csrf_exempt
 @api_view(["GET", "PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
-    """Get or update user profile."""
     profile, created = Profile.objects.get_or_create(user=request.user)
 
     if request.method == "GET":
@@ -215,10 +229,9 @@ def profile_view(request):
 
 
 @api_view(["POST", "OPTIONS"])
-@authentication_classes([])  # No authentication required for registration
+@authentication_classes([])
 @permission_classes([AllowAny])
 def register_view(request):
-    # Handle CORS preflight OPTIONS request
     if request.method == "OPTIONS":
         return Response(status=200)
 
@@ -227,17 +240,16 @@ def register_view(request):
     password = request.data.get("password")
 
     if not username or not email or not password:
-        return Response({"error": "Todos os campos são obrigatórios"}, status=400)
+        return Response({"error": "All fields are required"}, status=400)
 
     User = get_user_model()
 
     if User.objects.filter(username=username).exists():
-        return Response({"error": "Usuário já existe"}, status=400)
+        return Response({"error": "User already exists"}, status=400)
 
     if User.objects.filter(email=email).exists():
-        return Response({"error": "Email já está em uso"}, status=400)
+        return Response({"error": "Email already in use"}, status=400)
 
     user = User.objects.create_user(username=username, email=email, password=password)
-    # Create profile automatically when user registers
     Profile.objects.create(user=user)
-    return Response({"message": "Usuário criado com sucesso"}, status=201)
+    return Response({"message": "User created successfully"}, status=201)

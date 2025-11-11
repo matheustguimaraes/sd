@@ -40,9 +40,11 @@ yum install -y aws-cli
 
 # Authenticate to ECR
 aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
+# aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 948532068149.dkr.ecr.us-east-1.amazonaws.com
 
 # Pull the Docker image from ECR
 docker pull ${aws_ecr_repository.frontend.repository_url}:latest
+# docker pull 948532068149.dkr.ecr.us-east-1.amazonaws.com/mdcc-nuvem-frontend:latest
 
 # Run the Docker image
 docker run -d \
@@ -51,6 +53,8 @@ docker run -d \
 -p 3000:3000 \
 --env NEXT_PUBLIC_API_URL=http://${aws_lb.main.dns_name}/api \
 ${aws_ecr_repository.frontend.repository_url}:latest
+# docker run -d --name frontend --restart unless-stopped -p 3000:3000 --env NEXT_PUBLIC_API_URL=http://mdcc-nuvem-alb-1250827941.us-east-1.elb.amazonaws.com/api 948532068149.dkr.ecr.us-east-1.amazonaws.com/mdcc-nuvem-frontend:latest
+
 
 echo "User-data script execution completed."
 EOF

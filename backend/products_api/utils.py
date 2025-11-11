@@ -19,6 +19,7 @@ from products_api.environment_variables import (
 )
 import pika
 from products_api.storage_backends import PrivateMediaStorage
+import traceback
 
 
 class MediaStorage(S3Boto3Storage):
@@ -53,7 +54,9 @@ def get_s3_url(s3_key):
 
 
 def upload_to_s3(file, s3_key):
-    """Faz upload usando Django default storage."""
+    print(f"upload_to_s3 file: {file}")
+    print(f"upload_to_s3 s3_key: {s3_key}")
+
     return default_storage.save(s3_key, file)
 
 
@@ -119,6 +122,8 @@ def log_request_info(ip_address, user_id, username, path=None, method=None):
 
 
 def publish_to_rabbitmq(message):
+    print(f"publish_to_rabbitmq message: {message}")
+
     try:
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(
@@ -141,14 +146,16 @@ def publish_to_rabbitmq(message):
         connection.close()
         return True
     except Exception as e:
-        print(f"Erro ao publicar no RabbitMQ: {e}")
+        print(f"publish_to_rabbitmq error: {e}")
+        traceback.print_exc()
         return None
 
 
 def publish_to_sns(message):
-    """Publica mensagem no SNS topic."""
+    print(f"publish_to_sns message: {message}")
+
     if not SNS_TOPIC_ARN:
-        print("SNS_TOPIC_ARN não configurado, pulando publicação")
+        print("publish_to_sns error: SNS_TOPIC_ARN not configured, skipping publication")
         return None
 
     try:
@@ -163,8 +170,9 @@ def publish_to_sns(message):
             TopicArn=SNS_TOPIC_ARN, Message=json.dumps(message), Subject="Image Processing Request"
         )
 
-        print(f"Mensagem publicada no SNS: {response['MessageId']}")
+        print(f"publish_to_sns response: {response['MessageId']}")
         return response
     except Exception as e:
-        print(f"Erro ao publicar no SNS: {e}")
+        print(f"publish_to_sns error: {e}")
+        traceback.print_exc()
         return None

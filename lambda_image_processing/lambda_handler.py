@@ -5,8 +5,9 @@ import requests
 from io import BytesIO
 from PIL import Image
 from botocore.exceptions import ClientError
+import traceback
 
-# Inicializa clientes AWS
+# environment variables
 s3_client = boto3.client("s3")
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME")
 backend_api_url = os.environ.get("BACKEND_API_URL")
@@ -14,51 +15,41 @@ service_api_token = os.environ.get("SERVICE_API_TOKEN")
 
 
 def handler(event, context):
-    """
-    Processa mensagens do SQS, converte imagens para preto e branco e salva no S3.
-    """
-    print(f"Evento recebido: {json.dumps(event)}")
+    print(f"handler Received event: {json.dumps(event)}")
 
-    # Processa cada record do SQS
+    # Process each record from the SQS
     for record in event.get("Records", []):
         try:
-            # SQS messages from SNS are wrapped in a 'body' field
             body = json.loads(record["body"])
 
-            # Se a mensagem veio do SNS, há um campo 'Message' adicional
             if "Message" in body:
                 message = json.loads(body["Message"])
             else:
                 message = body
 
-            print(f"Mensagem processada: {message}")
+            print(f"Processed message: {message}")
 
-            # Extrai informações da mensagem
+            # Extract information from the message
             s3_key = message.get("s3_key")
             product_id = message.get("product_id")
 
             if not s3_key:
-                print("Erro: s3_key não encontrado na mensagem")
+                print("Error: s3_key not found in message")
                 continue
 
-            # Processa a imagem
             process_image(s3_key, product_id)
 
         except Exception as e:
-            print(f"Erro ao processar mensagem: {str(e)}")
-            import traceback
-
+            print(f"Error processing message: {str(e)}")
             traceback.print_exc()
-            # Não relança exceção para evitar reprocessamento infinito
             continue
 
-    return {"statusCode": 200, "body": json.dumps("Imagens processadas com sucesso")}
+    return {"statusCode": 200, "body": json.dumps("Images processed successfully")}
 
 
 def fetch_image_from_s3(original_key: str):
-    """
-    Baixa imagem considerando chaves com e sem prefixo private/.
-    """
+    print(f"fetch_image_from_s3 Fetching image from S3: {original_key}")
+
     candidate_keys = [original_key]
     if not original_key.startswith("private/"):
         candidate_keys.append(f"private/{original_key}")
@@ -82,39 +73,35 @@ def fetch_image_from_s3(original_key: str):
 
 
 def process_image(s3_key, product_id):
-    """
-    Baixa imagem do S3, converte para preto e branco e salva de volta.
-    """
     try:
         print(f"Processando imagem: {s3_key}")
 
-        # Baixa a imagem do S3
         resolved_key, image_data = fetch_image_from_s3(s3_key)
+        print(f"Resolved key: {resolved_key}")
 
-        # Abre a imagem com PIL
         image = Image.open(BytesIO(image_data))
+        print(f"Image: {image}")
 
-        # Converte para preto e branco (grayscale)
         bw_image = image.convert("L")
+        print(f"BW Image: {bw_image}")
 
-        # Converte de volta para RGB para manter compatibilidade
         bw_image_rgb = bw_image.convert("RGB")
+        print(f"BW Image RGB: {bw_image_rgb}")
 
-        # Salva a imagem processada em um buffer
         output_buffer = BytesIO()
-        # Mantém o formato original se possível, senão usa JPEG
         format_ext = image.format if image.format else "JPEG"
         if format_ext not in ["JPEG", "PNG"]:
             format_ext = "JPEG"
 
         bw_image_rgb.save(output_buffer, format=format_ext, quality=95)
         output_buffer.seek(0)
+        print(f"Output buffer: {output_buffer}")
 
-        # Gera a chave S3 para a imagem processada
-        # Remove extensão do nome original e adiciona _bw
+        # Generate the S3 key for the processed image
         base_key = resolved_key.rsplit(".", 1)[0] if "." in resolved_key else resolved_key
         extension = resolved_key.rsplit(".", 1)[1] if "." in resolved_key else "jpg"
         bw_s3_key = f"{base_key}_bw.{extension}"
+        print(f"BW S3 Key: {bw_s3_key}")
 
         # Faz upload da imagem processada para o S3
         s3_client.put_object(
@@ -124,33 +111,32 @@ def process_image(s3_key, product_id):
             ContentType=f"image/{format_ext.lower()}",
         )
 
-        print(f"Imagem processada salva em: {bw_s3_key}")
+        print(f"Processed image saved in: {bw_s3_key}")
 
         if product_id:
             register_bw_image(product_id, bw_s3_key)
         else:
-            print("Produto sem ID informado, pulando registro da imagem P&B")
+            print("Product without ID informed, skipping black and white image registration")
 
     except Exception as e:
-        print(f"Erro ao processar imagem {s3_key}: {str(e)}")
-        import traceback
-
+        print(f"Error processing image {s3_key}: {str(e)}")
         traceback.print_exc()
         raise
 
 
 def register_bw_image(product_id, bw_s3_key):
-    """
-    Envia atualização para o backend registrando a chave P&B.
-    """
+    print(f"register_bw_image Registering black and white image for product {product_id} with key {bw_s3_key}")
+
     if not backend_api_url:
-        print("BACKEND_API_URL não configurada, pulando notificação")
+        print("BACKEND_API_URL not configured, skipping notification")
         return
     if not service_api_token:
-        print("SERVICE_API_TOKEN não configurado, pulando notificação")
+        print("SERVICE_API_TOKEN not configured, skipping notification")
         return
 
     endpoint = f"{backend_api_url.rstrip('/')}/products/{product_id}/register-bw-image/"
+    print(f"register_bw_image Endpoint: {endpoint}")
+
     try:
         response = requests.post(
             endpoint,
@@ -159,6 +145,10 @@ def register_bw_image(product_id, bw_s3_key):
             timeout=10,
         )
         response.raise_for_status()
-        print(f"Imagem P&B registrada no backend para produto {product_id}")
+        print(f"register_bw_image Response: {response.json()}")
+        print(f"register_bw_image Response status: {response.status_code}")
+        print(f"register_bw_image Black and white image registered in backend for product {product_id}")
+        return True
     except Exception as error:
-        print(f"Erro ao registrar imagem P&B no backend: {error}")
+        print(f"Error registering black and white image in backend: {error}")
+        return False

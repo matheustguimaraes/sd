@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from products_api.models import Product, Profile
 
+from products_api.utils import get_s3_url
+
 
 class ProductSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
@@ -21,22 +23,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image_s3_key:
-            from products_api.utils import get_s3_url
-
             return get_s3_url(obj.image_s3_key)
         return None
 
     def get_bw_image_url(self, obj):
         if obj.image_bw_s3_key:
-            from products_api.utils import get_s3_url
-
             return get_s3_url(obj.image_bw_s3_key)
         return None
 
     def get_thumbnail_url(self, obj):
         if obj.image_thumbnail_s3_key:
-            from products_api.utils import get_s3_url
-
             return get_s3_url(obj.image_thumbnail_s3_key)
         return None
 
