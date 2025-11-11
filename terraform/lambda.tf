@@ -74,7 +74,6 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 }
 
 # Lambda function for image processing
-# Note: Run scripts/build-lambda.sh before applying to create the zip file
 resource "aws_lambda_function" "image_processing" {
   filename         = "${path.module}/lambda_image_processing.zip"
   function_name    = "${var.project_name}-image-processing"

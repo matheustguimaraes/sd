@@ -3,6 +3,7 @@ import boto3
 import os
 from io import BytesIO
 from PIL import Image
+from botocore.exceptions import ClientError
 
 # Inicializa clientes AWS
 s3_client = boto3.client("s3")
@@ -51,6 +52,32 @@ def handler(event, context):
     return {"statusCode": 200, "body": json.dumps("Imagens processadas com sucesso")}
 
 
+def fetch_image_from_s3(original_key: str):
+    """
+    Baixa imagem considerando chaves com e sem prefixo private/.
+    """
+    candidate_keys = [original_key]
+    if not original_key.startswith("private/"):
+        candidate_keys.append(f"private/{original_key}")
+
+    last_error = None
+    for candidate in candidate_keys:
+        try:
+            print(f"Tentando baixar chave: {candidate}")
+            response = s3_client.get_object(Bucket=s3_bucket_name, Key=candidate)
+            image_bytes = response["Body"].read()
+            return candidate, image_bytes
+        except ClientError as error:
+            error_code = error.response.get("Error", {}).get("Code")
+            if error_code in ("NoSuchKey", "404"):
+                print(f"Chave não encontrada: {candidate}")
+                last_error = error
+                continue
+            raise
+
+    raise last_error
+
+
 def process_image(s3_key, product_id):
     """
     Baixa imagem do S3, converte para preto e branco e salva de volta.
@@ -59,8 +86,7 @@ def process_image(s3_key, product_id):
         print(f"Processando imagem: {s3_key}")
 
         # Baixa a imagem do S3
-        response = s3_client.get_object(Bucket=s3_bucket_name, Key=s3_key)
-        image_data = response["Body"].read()
+        resolved_key, image_data = fetch_image_from_s3(s3_key)
 
         # Abre a imagem com PIL
         image = Image.open(BytesIO(image_data))
@@ -83,8 +109,8 @@ def process_image(s3_key, product_id):
 
         # Gera a chave S3 para a imagem processada
         # Remove extensão do nome original e adiciona _bw
-        base_key = s3_key.rsplit(".", 1)[0] if "." in s3_key else s3_key
-        extension = s3_key.rsplit(".", 1)[1] if "." in s3_key else "jpg"
+        base_key = resolved_key.rsplit(".", 1)[0] if "." in resolved_key else resolved_key
+        extension = resolved_key.rsplit(".", 1)[1] if "." in resolved_key else "jpg"
         bw_s3_key = f"{base_key}_bw.{extension}"
 
         # Faz upload da imagem processada para o S3

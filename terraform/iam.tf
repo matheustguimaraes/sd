@@ -183,9 +183,6 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 }
 
 # IAM User for local development (optional - for testing outside EC2)
-# NOTE: This requires IAM permissions. If your terraform user doesn't have IAM:CreateUser,
-# you can create the user manually in AWS Console or skip this section.
-# To skip: set create_app_user = false in terraform.tfvars
 resource "aws_iam_user" "app_user" {
   count = var.create_app_user ? 1 : 0
   name  = "${var.project_name}-app-user"

@@ -1,10 +1,10 @@
-# Get latest Amazon Linux 2 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
+    # Amazon Linux 2 AMI
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 
@@ -188,6 +188,7 @@ resource "aws_launch_template" "frontend" {
   key_name = var.key_pair_name != "" ? var.key_pair_name : null
 
   iam_instance_profile {
+    # IAM instance profile for EC2 instances
     name = aws_iam_instance_profile.ec2_profile.name
   }
 
@@ -324,8 +325,9 @@ resource "aws_autoscaling_policy" "frontend_scale_up" {
   name                   = "${var.project_name}-frontend-scale-up"
   autoscaling_group_name = aws_autoscaling_group.frontend.name
   adjustment_type        = "ChangeInCapacity"
+  # Scale up by 1 instance
   scaling_adjustment     = 1
-  cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
+  cooldown               = 300 # 5 minutes
 }
 
 # Auto Scaling Policy - Scale Down (Frontend)
@@ -333,8 +335,9 @@ resource "aws_autoscaling_policy" "frontend_scale_down" {
   name                   = "${var.project_name}-frontend-scale-down"
   autoscaling_group_name = aws_autoscaling_group.frontend.name
   adjustment_type        = "ChangeInCapacity"
+  # Scale down by 1 instance
   scaling_adjustment     = -1
-  cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
+  cooldown               = 300 # 5 minutes
 }
 
 
@@ -344,7 +347,7 @@ resource "aws_autoscaling_policy" "backend_scale_up" {
   autoscaling_group_name = aws_autoscaling_group.backend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = 1
-  cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
+  cooldown               = 300 # 5 minutes
 }
 
 # Auto Scaling Policy - Scale Down (Backend)
@@ -353,7 +356,7 @@ resource "aws_autoscaling_policy" "backend_scale_down" {
   autoscaling_group_name = aws_autoscaling_group.backend.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = -1
-  cooldown               = 300 # 5 minutes (increased from 60s to prevent rapid scaling and reduce costs)
+  cooldown               = 300 # 5 minutes
 }
 
 
