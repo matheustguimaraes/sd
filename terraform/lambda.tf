@@ -30,14 +30,17 @@ resource "aws_iam_role_policy" "lambda_s3_access" {
     Statement = [
       {
         Effect = "Allow"
+        Action = ["s3:ListBucket"]
+        Resource = aws_s3_bucket.images.arn
+      },
+      {
+        Effect = "Allow"
         Action = [
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject"
         ]
-        Resource = [
-          "${aws_s3_bucket.images.arn}/*"
-        ]
+        Resource = "${aws_s3_bucket.images.arn}/*"
       }
     ]
   })

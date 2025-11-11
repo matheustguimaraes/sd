@@ -1,31 +1,24 @@
 #!/bin/bash
-# Script para construir o pacote Lambda para processamento de imagens
+# Script para construir o pacote Lambda usando a Dockerfile oficial
 
-set -e
+set -euo pipefail
 
-LAMBDA_DIR="lambda_image_processing"
-ZIP_FILE="lambda_image_processing.zip"
-TEMP_DIR=$(mktemp -d)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LAMBDA_DIR="${PROJECT_ROOT}/lambda_image_processing"
+OUTPUT_ZIP="${PROJECT_ROOT}/terraform/lambda_image_processing.zip"
+IMAGE_NAME="lambda-image-processing-build"
 
-echo "Construindo pacote Lambda..."
+echo "Removendo pacote anterior (se existir)..."
+rm -f "${OUTPUT_ZIP}"
 
-# Copia os arquivos para o diretório temporário
-cp "${LAMBDA_DIR}/lambda_handler.py" "${TEMP_DIR}/"
-cp "${LAMBDA_DIR}/requirements.txt" "${TEMP_DIR}/"
+echo "Construindo imagem Docker (${IMAGE_NAME})..."
+docker build --platform linux/amd64 \
+  -t "${IMAGE_NAME}" \
+  "${LAMBDA_DIR}"
 
-# Instala dependências no diretório temporário
-cd "${TEMP_DIR}"
-pip install -r requirements.txt -t .
+echo "Extraindo artifact lambda_image_processing.zip..."
+CONTAINER_ID=$(docker create --platform linux/amd64 "${IMAGE_NAME}" /bin/true)
+docker cp "${CONTAINER_ID}:/lambda_image_processing.zip" "${OUTPUT_ZIP}"
+docker rm "${CONTAINER_ID}" >/dev/null
 
-# Cria o arquivo ZIP
-zip -r "${ZIP_FILE}" . -x "*.pyc" -x "__pycache__/*" -x "*.dist-info/*"
-
-# Move o ZIP para o diretório terraform
-cd - > /dev/null
-mv "${TEMP_DIR}/${ZIP_FILE}" terraform/
-
-# Limpa o diretório temporário
-rm -rf "${TEMP_DIR}"
-
-echo "Pacote Lambda criado: terraform/${ZIP_FILE}"
-
+echo "Pacote Lambda criado: ${OUTPUT_ZIP}"
