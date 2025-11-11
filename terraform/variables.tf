@@ -123,6 +123,11 @@ variable "aws_secret_access_key" {
   sensitive   = true
 }
 
+variable "service_api_token" {
+  description = "Shared token used for backend-to-backend communication (Lambda -> Django)."
+  type        = string
+}
+
 variable "domain_name" {
   description = "Main domain name (e.g., example.com). Leave empty to use ALB DNS name directly."
   type        = string

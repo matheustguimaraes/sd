@@ -59,8 +59,10 @@ export interface Product {
   description?: string;
   price: string;
   image_s3_key?: string;
+  image_bw_s3_key?: string;
   image_thumbnail_s3_key?: string;
   image_url?: string;
+  bw_image_url?: string;
   thumbnail_url?: string;
   created_at: string;
   updated_at: string;

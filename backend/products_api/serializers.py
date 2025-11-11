@@ -5,6 +5,7 @@ from products_api.models import Product, Profile
 class ProductSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
+    bw_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -13,6 +14,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "image_s3_key",
+            "image_bw_s3_key",
             "image_thumbnail_s3_key",
             "user",
         ]
@@ -22,6 +24,13 @@ class ProductSerializer(serializers.ModelSerializer):
             from products_api.utils import get_s3_url
 
             return get_s3_url(obj.image_s3_key)
+        return None
+
+    def get_bw_image_url(self, obj):
+        if obj.image_bw_s3_key:
+            from products_api.utils import get_s3_url
+
+            return get_s3_url(obj.image_bw_s3_key)
         return None
 
     def get_thumbnail_url(self, obj):

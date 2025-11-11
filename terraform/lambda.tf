@@ -1,3 +1,7 @@
+locals {
+  backend_api_url = "http://${aws_lb.main.dns_name}/api"
+}
+
 # IAM Role for Lambda function
 resource "aws_iam_role" "lambda_image_processing" {
   name = "${var.project_name}-lambda-image-processing-role"
@@ -87,7 +91,9 @@ resource "aws_lambda_function" "image_processing" {
 
   environment {
     variables = {
-      S3_BUCKET_NAME = aws_s3_bucket.images.id
+      S3_BUCKET_NAME     = aws_s3_bucket.images.id
+      BACKEND_API_URL    = local.backend_api_url
+      SERVICE_API_TOKEN  = var.service_api_token
     }
   }
 

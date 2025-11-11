@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { productsApi } from "@/lib/api";
@@ -11,10 +12,22 @@ export default function PostPage() {
   const router = useRouter();
   const postId = parseInt(params.id as string);
 
-  const { data: post, isLoading } = useQuery({
+  const { data: post, isLoading, refetch } = useQuery({
     queryKey: ["products", postId],
     queryFn: () => productsApi.get(postId),
   });
+
+  useEffect(() => {
+    if (!post || !post.image_url || post.bw_image_url) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      refetch();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [post, refetch]);
 
   if (isLoading) {
     return (
@@ -72,21 +85,56 @@ export default function PostPage() {
         </Link>,
       ]}
     >
-      <div className="overflow-hidden rounded-lg border border-black">
-            {post.image_url ? (
+      <div className="flex flex-col gap-6">
+        {post.image_url && post.bw_image_url ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            <figure className="overflow-hidden rounded-lg border border-black">
               <img
                 src={post.image_url}
-                alt={post.name || "Post"}
+                alt={post.name || "Post em cores"}
                 className="w-full object-cover"
               />
+              <figcaption className="border-t border-black bg-white px-4 py-2 text-center text-sm text-black">
+                Versão original
+              </figcaption>
+            </figure>
+            <figure className="overflow-hidden rounded-lg border border-black">
+              <img
+                src={post.bw_image_url}
+                alt={post.name ? `${post.name} preto e branco` : "Post preto e branco"}
+                className="w-full object-cover"
+              />
+              <figcaption className="border-t border-black bg-white px-4 py-2 text-center text-sm text-black">
+                Versão preto e branco
+              </figcaption>
+            </figure>
+          </div>
+        ) : post.image_url ? (
+          <div className="overflow-hidden rounded-lg border border-black">
+            <img
+              src={post.image_url}
+              alt={post.name || "Post"}
+              className="w-full object-cover"
+            />
+          </div>
             ) : post.thumbnail_url ? (
+          <div className="overflow-hidden rounded-lg border border-black">
               <img
                 src={post.thumbnail_url}
                 alt={post.name || "Post"}
                 className="w-full object-cover"
               />
+          </div>
+        ) : post.bw_image_url ? (
+          <div className="overflow-hidden rounded-lg border border-black">
+            <img
+              src={post.bw_image_url}
+              alt={post.name ? `${post.name} preto e branco` : "Post preto e branco"}
+              className="w-full object-cover"
+            />
+          </div>
             ) : (
-              <div className="flex aspect-square w-full items-center justify-center bg-white border border-black">
+          <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-black bg-white">
                 <svg
                   className="h-16 w-16 text-black/30"
                   fill="none"
@@ -104,10 +152,8 @@ export default function PostPage() {
             )}
 
             {post.description && (
-              <div className="border-t border-black p-4">
-                <p className="text-black whitespace-pre-wrap">
-                  {post.description}
-                </p>
+          <div className="rounded-lg border border-black p-4">
+            <p className="whitespace-pre-wrap text-black">{post.description}</p>
                 {post.created_at && (
                   <p className="mt-2 text-xs text-black/60">
                     {new Date(post.created_at).toLocaleDateString("pt-BR", {

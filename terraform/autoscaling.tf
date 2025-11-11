@@ -111,6 +111,7 @@ docker run -d \
 --env RABBITMQ_QUEUE_NAME=${var.sqs_queue_name} \
 --env AWS_REGION=${var.aws_region} \
 --env DEBUG=false \
+--env SERVICE_API_TOKEN=${var.service_api_token} \
 ${aws_ecr_repository.backend.repository_url}:latest
 
 echo "User-data script execution completed."
@@ -170,6 +171,7 @@ docker run -d \
 --env RABBITMQ_QUEUE_NAME=${var.sqs_queue_name} \
 --env AWS_REGION=${var.aws_region} \
 --env DEBUG=false \
+--env SERVICE_API_TOKEN=${var.service_api_token} \
 ${aws_ecr_repository.worker.repository_url}:latest \
 python manage.py process_images
 

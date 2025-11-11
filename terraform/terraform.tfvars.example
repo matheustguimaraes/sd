@@ -36,6 +36,7 @@ cpu_threshold_scale_down = 25
 # AWS Credentials (for application use)
 aws_access_key_id = "YOUR_AWS_ACCESS_KEY_ID"
 aws_secret_access_key = "YOUR_AWS_SECRET_ACCESS_KEY"
+service_api_token = "mdcc-nuvem-service-token"
 
 # Domain Configuration (optional - leave empty to use ALB DNS name directly)
 # If you have a domain, configure it here for subdomain-based routing:

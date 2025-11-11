@@ -1,3 +1,4 @@
+import traceback
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -6,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import get_user_model
-from products_api.environment_variables import USE_S3
+from products_api.environment_variables import USE_S3, SERVICE_API_TOKEN
 from products_api.models import Product, Profile
 from products_api.serializers import ProductSerializer, ProfileSerializer
 from products_api.utils import (
@@ -103,7 +104,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def upload_image(self, request, pk=None):
         product: Product = self.get_object()
 
-        if "image" not in request.FILES:
+        if "image" not in request.FILES:  # pyright: ignore[reportUnreachable]
             return Response(
                 {"error": "Nenhuma imagem fornecida"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -144,10 +145,43 @@ class ProductViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
+            print(f"Erro ao fazer upload: {str(e)}")
+            traceback.print_exc()
             return Response(
                 {"error": f"Erro ao fazer upload: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    @action(detail=True, methods=["post"], permission_classes=[AllowAny], url_path="register-bw-image")
+    def register_bw_image(self, request, pk=None):
+        """Registra no banco a chave P&B enviada pela Lambda."""
+        service_token = request.headers.get("X-Service-Token", "")
+        if not SERVICE_API_TOKEN or service_token != SERVICE_API_TOKEN:
+            return Response(
+                {"error": "Acesso não autorizado"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        image_bw_s3_key = request.data.get("image_bw_s3_key")
+        if not image_bw_s3_key:
+            return Response(
+                {"error": "Campo image_bw_s3_key é obrigatório"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        product: Product = self.get_object()
+        product.image_bw_s3_key = image_bw_s3_key
+        product.save(update_fields=["image_bw_s3_key"])
+
+        log_crud_action(
+            action_type="UPDATE",
+            model_name="Product",
+            data={"id": product.id, "action": "image_bw_registered", "s3_key": image_bw_s3_key},
+            user_id=self.request.user.id if self.request.user.is_authenticated else None,
+        )
+
+        serializer = self.get_serializer(product)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @csrf_exempt

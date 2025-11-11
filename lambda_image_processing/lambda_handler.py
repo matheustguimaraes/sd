@@ -1,6 +1,7 @@
 import json
 import boto3
 import os
+import requests
 from io import BytesIO
 from PIL import Image
 from botocore.exceptions import ClientError
@@ -8,6 +9,8 @@ from botocore.exceptions import ClientError
 # Inicializa clientes AWS
 s3_client = boto3.client("s3")
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME")
+backend_api_url = os.environ.get("BACKEND_API_URL")
+service_api_token = os.environ.get("SERVICE_API_TOKEN")
 
 
 def handler(event, context):
@@ -123,9 +126,39 @@ def process_image(s3_key, product_id):
 
         print(f"Imagem processada salva em: {bw_s3_key}")
 
+        if product_id:
+            register_bw_image(product_id, bw_s3_key)
+        else:
+            print("Produto sem ID informado, pulando registro da imagem P&B")
+
     except Exception as e:
         print(f"Erro ao processar imagem {s3_key}: {str(e)}")
         import traceback
 
         traceback.print_exc()
         raise
+
+
+def register_bw_image(product_id, bw_s3_key):
+    """
+    Envia atualização para o backend registrando a chave P&B.
+    """
+    if not backend_api_url:
+        print("BACKEND_API_URL não configurada, pulando notificação")
+        return
+    if not service_api_token:
+        print("SERVICE_API_TOKEN não configurado, pulando notificação")
+        return
+
+    endpoint = f"{backend_api_url.rstrip('/')}/products/{product_id}/register-bw-image/"
+    try:
+        response = requests.post(
+            endpoint,
+            headers={"X-Service-Token": service_api_token},
+            json={"image_bw_s3_key": bw_s3_key},
+            timeout=10,
+        )
+        response.raise_for_status()
+        print(f"Imagem P&B registrada no backend para produto {product_id}")
+    except Exception as error:
+        print(f"Erro ao registrar imagem P&B no backend: {error}")
