@@ -23,15 +23,12 @@ import traceback
 
 
 class MediaStorage(S3Boto3Storage):
-    """Custom S3 storage class for media files."""
-
     location = "media"
     default_acl = "public-read"
     file_overwrite = False
 
 
 def get_s3_client():
-    """Get S3 client (only used in production)."""
     return boto3.client(
         "s3",
         aws_access_key_id=AWS_ACCESS_KEY_ID_ENV,
@@ -41,7 +38,7 @@ def get_s3_client():
 
 
 def get_s3_url(s3_key):
-    """Gera signed URL para arquivo privado no S3."""
+    print(f"get_s3_url s3_key: {s3_key}")
     if not s3_key:
         return None
 
@@ -61,9 +58,9 @@ def upload_to_s3(file, s3_key):
 
 
 def log_crud_action(action_type, model_name, data, user_id=None):
-    """Log CRUD action to DynamoDB (only when DEBUG=False)."""
     if DEBUG_MODE:
-        return  # Skip logging in development
+        print(f"log_crud_action DEBUG: {DEBUG_MODE}")
+        return
 
     try:
         dynamodb = boto3.resource(
@@ -72,8 +69,10 @@ def log_crud_action(action_type, model_name, data, user_id=None):
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY_ENV,
             region_name=DYNAMODB_REGION_ENV,
         )
+        print(f"log_crud_action dynamodb: {dynamodb}")
 
         table = dynamodb.Table(DYNAMODB_TABLE_NAME_ENV)
+        print(f"log_crud_action table: {table}")
 
         log_item = {
             "id": f"{model_name}_{datetime.now().isoformat()}",
@@ -83,16 +82,20 @@ def log_crud_action(action_type, model_name, data, user_id=None):
             "timestamp": datetime.now().isoformat(),
             "user_id": str(user_id) if user_id else None,
         }
+        print(f"log_crud_action log_item: {log_item}")
 
         table.put_item(Item=log_item)
+        print(f"log_crud_action table.put_item: {table.put_item}")
+
     except Exception as e:
-        print(f"Erro ao logar ação no DynamoDB: {e}")
+        print(f"log_crud_action error: {e}")
+        traceback.print_exc()
 
 
 def log_request_info(ip_address, user_id, username, path=None, method=None):
-    """Log request information to DynamoDB (only when DEBUG=False)."""
     if DEBUG_MODE:
-        return  # Skip logging in development
+        print(f"log_request_info DEBUG: {DEBUG_MODE}")
+        return
 
     try:
         dynamodb = boto3.resource(
@@ -101,8 +104,10 @@ def log_request_info(ip_address, user_id, username, path=None, method=None):
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY_ENV,
             region_name=DYNAMODB_REGION_ENV,
         )
+        print(f"log_request_info dynamodb: {dynamodb}")
 
         table = dynamodb.Table(DYNAMODB_TABLE_NAME_ENV)
+        print(f"log_request_info table: {table}")
 
         log_item = {
             "id": f"REQUEST_{datetime.now().isoformat()}",
@@ -115,10 +120,13 @@ def log_request_info(ip_address, user_id, username, path=None, method=None):
             "method": method if method else None,
             "timestamp": datetime.now().isoformat(),
         }
-
+        print(f"log_request_info log_item: {log_item}")
         table.put_item(Item=log_item)
+        print(f"log_request_info table.put_item: {table.put_item}")
+
     except Exception as e:
-        print(f"Erro ao logar requisição no DynamoDB: {e}")
+        print(f"log_request_info error: {e}")
+        traceback.print_exc()
 
 
 def publish_to_rabbitmq(message):

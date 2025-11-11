@@ -22,12 +22,13 @@ RABBITMQ_PORT_ENV = int(os.environ.get("RABBITMQ_PORT", "5672"))
 RABBITMQ_USER_ENV = os.environ.get("RABBITMQ_USER", "admin")
 RABBITMQ_PASSWORD_ENV = os.environ.get("RABBITMQ_PASSWORD", "admin")
 RABBITMQ_QUEUE_NAME_ENV = os.environ.get("RABBITMQ_QUEUE_NAME", "image-processing-queue")
-
+print(f"RABBITMQ_QUEUE_NAME_ENV: {RABBITMQ_QUEUE_NAME_ENV}")
 # SNS Configuration
 SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:948532068149:mdcc-nuvem-image-processing-topic")
 
 USE_S3 = os.environ.get("USE_S3", "true").upper() == "TRUE"
 
-DEBUG_MODE = os.environ.get("DEBUG", "true").upper() == "TRUE"
+DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").upper() == "TRUE"
+print(f"DEBUG_MODE: {os.environ.get('DEBUG_MODE')}")
 
 SERVICE_API_TOKEN = os.environ.get("SERVICE_API_TOKEN", "mdcc-nuvem-service-token")
