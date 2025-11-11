@@ -22,6 +22,10 @@ RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", "5672"))
 RABBITMQ_USER = os.environ.get("RABBITMQ_USER", "admin")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "admin")
 RABBITMQ_QUEUE_NAME = os.environ.get("RABBITMQ_QUEUE_NAME", "image-processing-queue")
+
+# SNS Configuration
+SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN", "")
+
 USE_S3 = os.environ.get("USE_S3", "true").upper() == "TRUE"
 
 DEBUG_MODE = os.environ.get("DEBUG", "true").upper() == "TRUE"

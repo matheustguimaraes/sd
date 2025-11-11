@@ -14,7 +14,7 @@ export default function Navbar({ leftElement, rightElements }: NavbarProps) {
 
   const defaultLeftElement = (
     <Link href="/feed" className="text-xl font-bold text-black">
-      SD Insta
+      MDCC Nuvem - Insta
     </Link>
   );
 

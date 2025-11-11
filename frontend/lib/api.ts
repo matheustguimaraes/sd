@@ -3,8 +3,15 @@ import Cookies from "js-cookie";
 
 // Ensures the base URL always ends with /api
 const getApiBaseUrl = () => {
-  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  return url.endsWith("/api") ? url : `${url}/api`;
+  // Se NEXT_PUBLIC_API_URL estiver definido, usa ele
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    const url = process.env.NEXT_PUBLIC_API_URL;
+    return url.endsWith("/api") ? url : `${url}/api`;
+  }
+  
+  // Fallback: usa URL relativa (mesmo domínio) quando frontend e backend estão no mesmo ALB
+  // Isso funciona tanto no browser quanto no servidor Next.js
+  return "/api";
 };
 
 const API_BASE_URL = getApiBaseUrl();

@@ -1,17 +1,17 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes, action, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-
+from django.contrib.auth import get_user_model
 from products_api.environment_variables import USE_S3
 from products_api.models import Product, Profile
 from products_api.serializers import ProductSerializer, ProfileSerializer
 from products_api.utils import (
     log_crud_action,
-    publish_to_rabbitmq,
+    publish_to_sns,
 )
 
 from datetime import datetime
@@ -126,7 +126,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 "s3_key": upload.file.name,
                 "timestamp": datetime.now().isoformat(),
             }
-            publish_to_rabbitmq(message)
+            publish_to_sns(message)
 
             log_crud_action(
                 action_type="UPDATE",
@@ -180,11 +180,13 @@ def profile_view(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
-@api_view(["POST"])
+@api_view(["POST", "OPTIONS"])
+@authentication_classes([])  # No authentication required for registration
 @permission_classes([AllowAny])
 def register_view(request):
-    from django.contrib.auth import get_user_model
+    # Handle CORS preflight OPTIONS request
+    if request.method == "OPTIONS":
+        return Response(status=200)
 
     username = request.data.get("username")
     email = request.data.get("email")

@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "SD Insta",
+  title: "MDCC Nuvem - Insta",
   description: "Share your photos with the world",
 };
 

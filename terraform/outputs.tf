@@ -55,6 +55,21 @@ output "sqs_queue_arn" {
   value       = aws_sqs_queue.image_processing.arn
 }
 
+output "sns_topic_arn" {
+  description = "SNS topic ARN for image processing"
+  value       = aws_sns_topic.image_processing.arn
+}
+
+output "lambda_function_name" {
+  description = "Lambda function name for image processing"
+  value       = aws_lambda_function.image_processing.function_name
+}
+
+output "lambda_function_arn" {
+  description = "Lambda function ARN for image processing"
+  value       = aws_lambda_function.image_processing.arn
+}
+
 output "dynamodb_table_name" {
   description = "DynamoDB table name"
   value       = aws_dynamodb_table.crud_logs.name

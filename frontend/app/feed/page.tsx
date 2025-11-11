@@ -38,7 +38,7 @@ export default function FeedPage() {
 
   return (
     <PageLayout
-      leftElement={<h1 className="text-xl font-bold text-black">SD Insta</h1>}
+      leftElement={<h1 className="text-xl font-bold text-black">MDCC Nuvem - Insta</h1>}
     >
       {posts && posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">

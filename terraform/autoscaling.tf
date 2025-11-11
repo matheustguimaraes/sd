@@ -100,6 +100,8 @@ docker run -d \
 --env AWS_S3_CUSTOM_DOMAIN=${aws_s3_bucket.images.id}.s3.${var.aws_region}.amazonaws.com \
 --env AWS_S3_REGION_NAME=${var.aws_region} \
 --env AWS_ALB_DOMAIN=${aws_lb.main.dns_name} \
+--env SNS_TOPIC_ARN=${aws_sns_topic.image_processing.arn} \
+--env USE_S3=true \
 --env DYNAMODB_REGION=${var.aws_region} \
 --env DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
 --env RABBITMQ_HOST=mdcc_sd_rabbitmq \
@@ -108,6 +110,7 @@ docker run -d \
 --env RABBITMQ_PASSWORD=admin \
 --env RABBITMQ_QUEUE_NAME=${var.sqs_queue_name} \
 --env AWS_REGION=${var.aws_region} \
+--env DEBUG=false \
 ${aws_ecr_repository.backend.repository_url}:latest
 
 echo "User-data script execution completed."
@@ -158,12 +161,15 @@ docker run -d \
 --env DYNAMODB_REGION=${var.aws_region} \
 --env DYNAMODB_TABLE_NAME=${var.dynamodb_table_name} \
 --env AWS_ALB_DOMAIN=${aws_lb.main.dns_name} \
+--env SNS_TOPIC_ARN=${aws_sns_topic.image_processing.arn} \
+--env USE_S3=true \
 --env RABBITMQ_HOST=mdcc_sd_rabbitmq \
 --env RABBITMQ_PORT=5672 \
 --env RABBITMQ_USER=admin \
 --env RABBITMQ_PASSWORD=admin \
 --env RABBITMQ_QUEUE_NAME=${var.sqs_queue_name} \
 --env AWS_REGION=${var.aws_region} \
+--env DEBUG=false \
 ${aws_ecr_repository.worker.repository_url}:latest \
 python manage.py process_images
 

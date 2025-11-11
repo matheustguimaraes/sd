@@ -14,6 +14,7 @@ from products_api.environment_variables import (
     RABBITMQ_USER,
     RABBITMQ_PASSWORD,
     RABBITMQ_QUEUE_NAME,
+    SNS_TOPIC_ARN,
     DEBUG_MODE,
 )
 import pika
@@ -22,6 +23,7 @@ from products_api.storage_backends import PrivateMediaStorage
 
 class MediaStorage(S3Boto3Storage):
     """Custom S3 storage class for media files."""
+
     location = "media"
     default_acl = "public-read"
     file_overwrite = False
@@ -42,11 +44,11 @@ def get_s3_url(s3_key):
     if not s3_key:
         return None
 
-    if not s3_key.startswith('private/'):
+    if not s3_key.startswith("private/"):
         s3_key = f"private/{s3_key}"
 
     storage = PrivateMediaStorage()
-    real_key = s3_key.replace('private/', '', 1)
+    real_key = s3_key.replace("private/", "", 1)
     return storage.url(real_key)
 
 
@@ -140,4 +142,29 @@ def publish_to_rabbitmq(message):
         return True
     except Exception as e:
         print(f"Erro ao publicar no RabbitMQ: {e}")
+        return None
+
+
+def publish_to_sns(message):
+    """Publica mensagem no SNS topic."""
+    if not SNS_TOPIC_ARN:
+        print("SNS_TOPIC_ARN não configurado, pulando publicação")
+        return None
+
+    try:
+        sns_client = boto3.client(
+            "sns",
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_S3_REGION_NAME,
+        )
+
+        response = sns_client.publish(
+            TopicArn=SNS_TOPIC_ARN, Message=json.dumps(message), Subject="Image Processing Request"
+        )
+
+        print(f"Mensagem publicada no SNS: {response['MessageId']}")
+        return response
+    except Exception as e:
+        print(f"Erro ao publicar no SNS: {e}")
         return None

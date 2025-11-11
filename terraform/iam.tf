@@ -95,6 +95,25 @@ resource "aws_iam_role_policy" "sqs_access" {
   })
 }
 
+# IAM Policy for SNS access
+resource "aws_iam_role_policy" "sns_access" {
+  name = "${var.project_name}-sns-access"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Publish"
+        ]
+        Resource = aws_sns_topic.image_processing.arn
+      }
+    ]
+  })
+}
+
 # IAM Policy for ECR access (to pull Docker images)
 resource "aws_iam_role_policy" "ecr_access" {
   name = "${var.project_name}-ecr-access"
@@ -249,6 +268,25 @@ resource "aws_iam_user_policy" "app_user_sqs" {
           "sqs:GetQueueUrl"
         ]
         Resource = aws_sqs_queue.image_processing.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user_policy" "app_user_sns" {
+  count = var.create_app_user ? 1 : 0
+  name  = "${var.project_name}-app-user-sns"
+  user  = aws_iam_user.app_user[0].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Publish"
+        ]
+        Resource = aws_sns_topic.image_processing.arn
       }
     ]
   })

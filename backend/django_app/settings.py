@@ -1,13 +1,13 @@
 from datetime import timedelta
 from pathlib import Path
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # Carrega variáveis do .env antes de importar environment_variables
-BASE_DIR = Path(__file__).resolve().parent.parent
-env_path = BASE_DIR / '.env'
-if env_path.exists():
-    load_dotenv(env_path, override=True)
+# BASE_DIR = Path(__file__).resolve().parent.parent
+# env_path = BASE_DIR / '.env'
+# if env_path.exists():
+#     load_dotenv(env_path, override=True)
 
 from products_api.environment_variables import (
     DEBUG_MODE,
@@ -18,6 +18,8 @@ from products_api.environment_variables import (
     POSTGRES_USER,
     USE_S3,
 )
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-mdcc-sd-dev-key-change-in-production"
 DEBUG = DEBUG_MODE
@@ -45,7 +47,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # CSRF middleware removido - API usa JWT authentication
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "products_api.middleware.RequestLoggingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -168,19 +171,13 @@ REST_FRAMEWORK = {
 # Allow all origins for CORS
 CORS_ALLOW_ALL_ORIGINS = True
 
-# CSRF settings - exempt API endpoints since we use JWT authentication
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://toggo.dev",
-    "https://toggo.dev",
-    f"https://{os.getenv('AWS_STORAGE_BUCKET_NAME')}.s3.{os.getenv('AWS_S3_REGION_NAME')}.amazonaws.com",
-    f"http://{os.getenv('AWS_STORAGE_BUCKET_NAME')}.s3.{os.getenv('AWS_S3_REGION_NAME')}.amazonaws.com",
-]
-
-if os.getenv("AWS_S3_CUSTOM_DOMAIN"):
-    CSRF_TRUSTED_ORIGINS.append(f"https://{os.getenv('AWS_S3_CUSTOM_DOMAIN')}")
-    CSRF_TRUSTED_ORIGINS.append(f"http://{os.getenv('AWS_S3_CUSTOM_DOMAIN')}")
+# CSRF desabilitado completamente - API usa JWT authentication
+CSRF_COOKIE_SECURE = False
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_HTTPONLY = False
+# CSRF middleware removido, então esta configuração não é necessária
+# Mas mantida para compatibilidade caso algum código ainda referencie
+CSRF_TRUSTED_ORIGINS = []
 
 # Allow CORS for media files
 CORS_ALLOW_CREDENTIALS = True
@@ -194,6 +191,14 @@ CORS_ALLOWED_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
+]
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]
 
 SIMPLE_JWT = {
