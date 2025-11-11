@@ -10,7 +10,7 @@ import os
 # if env_path.exists():
 #     load_dotenv(env_path, override=True)
 
-from products_api.environment_variables import (
+from posts_api.environment_variables import (
     AWS_ACCESS_KEY_ID_ENV,
     AWS_S3_CUSTOM_DOMAIN_ENV,
     AWS_S3_REGION_NAME_ENV,
@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "django_filters",
     "corsheaders",
-    "products_api.apps.ProductsApiConfig",
+    "posts_api.apps.PostsApiConfig",
 ]
 
 MIDDLEWARE = [
@@ -56,7 +56,7 @@ MIDDLEWARE = [
     # CSRF middleware removido - API usa JWT authentication
     # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "products_api.middleware.RequestLoggingMiddleware",
+    "posts_api.middleware.RequestLoggingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -135,7 +135,7 @@ AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 # s3 static settings
 STATIC_LOCATION = "static"
 STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
-STATICFILES_STORAGE = "products_api.storage_backends.StaticStorage"
+STATICFILES_STORAGE = "posts_api.storage_backends.StaticStorage"
 # s3 public media settings
 PUBLIC_MEDIA_LOCATION = "media"
 
@@ -143,10 +143,10 @@ PUBLIC_MEDIA_LOCATION = "media"
 if USE_S3:
     # aws settings
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
-    DEFAULT_FILE_STORAGE = "products_api.storage_backends.PublicMediaStorage"
+    DEFAULT_FILE_STORAGE = "posts_api.storage_backends.PublicMediaStorage"
     # s3 private media settings
     PRIVATE_MEDIA_LOCATION = "private"
-    PRIVATE_FILE_STORAGE = "products_api.storage_backends.PrivateMediaStorage"
+    PRIVATE_FILE_STORAGE = "posts_api.storage_backends.PrivateMediaStorage"
 else:
     MEDIA_URL = "/mediafiles/"
 

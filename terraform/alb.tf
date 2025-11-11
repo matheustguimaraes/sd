@@ -49,7 +49,7 @@ resource "aws_lb_target_group" "backend" {
     unhealthy_threshold = 5
     timeout             = 10
     interval            = 30
-    path                = "/api/products/"
+    path                = "/api/posts/"
     protocol            = "HTTP"
     matcher             = "200,301,302,404"
   }

@@ -7,10 +7,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
-from products_api.views import ProductViewSet, register_view, profile_view, image_upload
+from posts_api.views import ProductViewSet, register_view, profile_view, image_upload
 
 router = DefaultRouter()
-router.register("products", ProductViewSet, basename="products")
+router.register("posts", ProductViewSet, basename="posts")
 
 schema_view = get_schema_view(
     openapi.Info(

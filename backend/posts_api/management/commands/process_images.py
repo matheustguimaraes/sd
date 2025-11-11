@@ -9,8 +9,8 @@ from django.core.management.base import BaseCommand
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
-from products_api.models import Product
-from products_api.environment_variables import (
+from posts_api.models import Posts
+from posts_api.environment_variables import (
     RABBITMQ_HOST,
     RABBITMQ_PORT_ENV,
     RABBITMQ_USER_ENV,
@@ -81,9 +81,9 @@ class Command(BaseCommand):
             return
 
         try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            self.stdout.write(self.style.ERROR(f"Product {product_id} not found"))
+            post = Posts.objects.get(id=product_id)
+        except Posts.DoesNotExist:
+            self.stdout.write(self.style.ERROR(f"Post {product_id} not found"))
             return
 
         try:
@@ -123,17 +123,17 @@ class Command(BaseCommand):
             thumbnail_data = buffer.tobytes()
 
             # Generate thumbnail S3 key
-            thumbnail_s3_key = f"products/{product_id}/thumbnails/{uuid.uuid4()}_thumbnail.jpg"
+            thumbnail_s3_key = f"posts/{product_id}/thumbnails/{uuid.uuid4()}_thumbnail.jpg"
 
             # Upload thumbnail
             self.stdout.write(self.style.WARNING(f"Uploading thumbnail: {thumbnail_s3_key}"))
             default_storage.save(thumbnail_s3_key, ContentFile(thumbnail_data))
 
-            # Update product with thumbnail key
-            product.image_thumbnail_s3_key = thumbnail_s3_key
-            product.save()
+            # Update post with thumbnail key
+            post.image_thumbnail_s3_key = thumbnail_s3_key
+            post.save()
 
-            self.stdout.write(self.style.SUCCESS(f"Thumbnail generated and saved for product {product_id}"))
+            self.stdout.write(self.style.SUCCESS(f"Thumbnail generated and saved for post {product_id}"))
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error processing image: {e}"))

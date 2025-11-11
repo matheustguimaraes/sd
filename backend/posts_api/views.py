@@ -7,10 +7,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import get_user_model
-from products_api.environment_variables import USE_S3, SERVICE_API_TOKEN
-from products_api.models import Product, Profile
-from products_api.serializers import ProductSerializer, ProfileSerializer
-from products_api.utils import (
+from posts_api.environment_variables import USE_S3, SERVICE_API_TOKEN
+from posts_api.models import Posts, Profile
+from posts_api.serializers import ProductSerializer, ProfileSerializer
+from posts_api.utils import (
     log_crud_action,
     publish_to_sns,
 )
@@ -20,7 +20,7 @@ from datetime import datetime
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render
 
-from products_api.models import UploadPrivate
+from posts_api.models import UploadPrivate
 
 
 def image_upload(request):
@@ -47,26 +47,26 @@ def image_upload(request):
 @method_decorator(csrf_exempt, name="dispatch")
 class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Product.objects.all()
+    queryset = Posts.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["id", "name"]
 
     def perform_create(self, serializer):
-        product = serializer.save(user=self.request.user)
+        post = serializer.save(user=self.request.user)
         log_crud_action(
             action_type="CREATE",
-            model_name="Product",
-            data={"id": product.id, "name": product.name, "price": str(product.price)},
+            model_name="Post",
+            data={"id": post.id, "name": post.name, "price": str(post.price)},
             user_id=self.request.user.id,
         )
 
     def perform_update(self, serializer):
-        product = serializer.save()
+        post = serializer.save()
         log_crud_action(
             action_type="UPDATE",
-            model_name="Product",
-            data={"id": product.id, "name": product.name, "price": str(product.price)},
+            model_name="Post",
+            data={"id": post.id, "name": post.name, "price": str(post.price)},
             user_id=self.request.user.id,
         )
 
@@ -76,21 +76,21 @@ class ProductViewSet(viewsets.ModelViewSet):
         instance.delete()
         log_crud_action(
             action_type="DELETE",
-            model_name="Product",
+            model_name="Post",
             data={"id": product_id, "name": product_name},
             user_id=self.request.user.id,
         )
 
     def get_queryset(self):
         if getattr(self, "action", None) == "register_bw_image":
-            return Product.objects.all()
-        return Product.objects.filter(user=self.request.user)
+            return Posts.objects.all()
+        return Posts.objects.filter(user=self.request.user)
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         log_crud_action(
             action_type="READ",
-            model_name="Product",
+            model_name="Post",
             data={"action": "list"},
             user_id=request.user.id,
         )
@@ -100,7 +100,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         response = super().retrieve(request, *args, **kwargs)
         log_crud_action(
             action_type="READ",
-            model_name="Product",
+            model_name="Post",
             data={"id": kwargs.get("pk")},
             user_id=request.user.id,
         )
@@ -108,8 +108,8 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], url_path="upload-image")
     def upload_image(self, request, pk=None):
-        product: Product = self.get_object()
-        print(f"upload_image product: {product}")
+        post: Posts = self.get_object()
+        print(f"upload_image post: {post}")
 
         if "image" not in request.FILES:
             print(f"upload_image error: No image provided")
@@ -126,13 +126,13 @@ class ProductViewSet(viewsets.ModelViewSet):
             upload.save()
             print(f"upload_image upload: {upload}")
 
-            product.image_s3_key = upload.file.name
-            product.save()
-            print(f"upload_image product saved: {product}")
+            post.image_s3_key = upload.file.name
+            post.save()
+            print(f"upload_image post saved: {post}")
 
             message = {
                 "action": "process_image",
-                "product_id": product.id,
+                "product_id": post.id,
                 "s3_key": upload.file.name,
                 "timestamp": datetime.now().isoformat(),
             }
@@ -141,8 +141,8 @@ class ProductViewSet(viewsets.ModelViewSet):
 
             log_crud_action(
                 action_type="UPDATE",
-                model_name="Product",
-                data={"id": product.id, "action": "image_upload", "s3_key": upload.file.name},
+                model_name="Post",
+                data={"id": post.id, "action": "image_upload", "s3_key": upload.file.name},
                 user_id=request.user.id,
             )
 
@@ -179,18 +179,18 @@ class ProductViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            product: Product = self.get_object()
-            product.image_bw_s3_key = image_bw_s3_key
-            product.save(update_fields=["image_bw_s3_key"])
+            post: Posts = self.get_object()
+            post.image_bw_s3_key = image_bw_s3_key
+            post.save(update_fields=["image_bw_s3_key"])
 
             log_crud_action(
                 action_type="UPDATE",
-                model_name="Product",
-                data={"id": product.id, "action": "image_bw_registered", "s3_key": image_bw_s3_key},
+                model_name="Post",
+                data={"id": post.id, "action": "image_bw_registered", "s3_key": image_bw_s3_key},
                 user_id=self.request.user.id if self.request.user.is_authenticated else None,
             )
 
-            serializer = self.get_serializer(product)
+            serializer = self.get_serializer(post)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             print(f"Error registering black and white image: {str(e)}")

@@ -17,7 +17,7 @@ export default function PostPage() {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["products", postId],
+    queryKey: ["posts", postId],
     queryFn: () => productsApi.get(postId),
   });
 

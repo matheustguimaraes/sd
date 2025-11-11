@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from django.core.files.storage import default_storage
 from storages.backends.s3boto3 import S3Boto3Storage
-from products_api.environment_variables import (
+from posts_api.environment_variables import (
     AWS_ACCESS_KEY_ID_ENV,
     AWS_SECRET_ACCESS_KEY_ENV,
     AWS_S3_REGION_NAME_ENV,
@@ -18,7 +18,7 @@ from products_api.environment_variables import (
     DEBUG_MODE,
 )
 import pika
-from products_api.storage_backends import PrivateMediaStorage
+from posts_api.storage_backends import PrivateMediaStorage
 import traceback
 
 

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from products_api.models import Product, Profile
-from products_api.utils import get_s3_url
+from posts_api.models import Posts, Profile
+from posts_api.utils import get_s3_url
 
 
 @admin.register(Profile)
@@ -12,7 +12,7 @@ class ProfileAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "updated_at"]
 
 
-@admin.register(Product)
+@admin.register(Posts)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ["id", "image_preview", "name", "user", "price", "created_at"]
     list_filter = ["created_at", "user"]

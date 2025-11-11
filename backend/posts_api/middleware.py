@@ -1,4 +1,4 @@
-from products_api.utils import log_request_info
+from posts_api.utils import log_request_info
 
 
 class RequestLoggingMiddleware:

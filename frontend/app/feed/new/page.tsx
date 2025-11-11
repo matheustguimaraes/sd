@@ -37,7 +37,7 @@ export default function NewPostPage() {
       return post;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
       setUploading(false);
       setStatusMessage(null);
       router.push("/feed");

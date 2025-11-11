@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 
-from products_api.storage_backends import PublicMediaStorage, PrivateMediaStorage
+from posts_api.storage_backends import PublicMediaStorage, PrivateMediaStorage
 
 
 class Upload(models.Model):
@@ -37,8 +37,8 @@ class Profile(models.Model):
         return f"Profile of {self.user.username}"
 
 
-class Product(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="products")
+class Posts(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="posts")
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -50,6 +50,8 @@ class Product(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "Post"
+        verbose_name_plural = "Posts"
 
     def __str__(self):
         return f"{self.id} - {self.name} - R${self.price}"

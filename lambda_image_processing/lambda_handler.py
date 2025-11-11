@@ -116,7 +116,7 @@ def process_image(s3_key, product_id):
         if product_id:
             register_bw_image(product_id, bw_s3_key)
         else:
-            print("Product without ID informed, skipping black and white image registration")
+            print("Post without ID informed, skipping black and white image registration")
 
     except Exception as e:
         print(f"Error processing image {s3_key}: {str(e)}")
@@ -125,7 +125,7 @@ def process_image(s3_key, product_id):
 
 
 def register_bw_image(product_id, bw_s3_key):
-    print(f"register_bw_image Registering black and white image for product {product_id} with key {bw_s3_key}")
+    print(f"register_bw_image Registering black and white image for post {product_id} with key {bw_s3_key}")
 
     if not backend_api_url:
         print("BACKEND_API_URL not configured, skipping notification")
@@ -134,7 +134,7 @@ def register_bw_image(product_id, bw_s3_key):
         print("SERVICE_API_TOKEN not configured, skipping notification")
         return
 
-    endpoint = f"{backend_api_url.rstrip('/')}/products/{product_id}/register-bw-image/"
+    endpoint = f"{backend_api_url.rstrip('/')}/posts/{product_id}/register-bw-image/"
     print(f"register_bw_image Endpoint: {endpoint}")
 
     try:
@@ -147,7 +147,7 @@ def register_bw_image(product_id, bw_s3_key):
         response.raise_for_status()
         print(f"register_bw_image Response: {response.json()}")
         print(f"register_bw_image Response status: {response.status_code}")
-        print(f"register_bw_image Black and white image registered in backend for product {product_id}")
+        print(f"register_bw_image Black and white image registered in backend for post {product_id}")
         return True
     except Exception as error:
         print(f"Error registering black and white image in backend: {error}")

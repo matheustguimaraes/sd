@@ -53,7 +53,7 @@ api.interceptors.response.use(
   }
 );
 
-export interface Product {
+export interface Post {
   id: number;
   name: string;
   description?: string;
@@ -109,28 +109,28 @@ export const authApi = {
 };
 
 export const productsApi = {
-  list: async (): Promise<Product[]> => {
-    const response = await api.get("/products/");
+  list: async (): Promise<Post[]> => {
+    const response = await api.get("/posts/");
     return response.data.results || response.data;
   },
 
-  get: async (id: number): Promise<Product> => {
-    const response = await api.get(`/products/${id}/`);
+  get: async (id: number): Promise<Post> => {
+    const response = await api.get(`/posts/${id}/`);
     return response.data;
   },
 
-  create: async (data: Omit<Product, "id" | "created_at" | "updated_at">): Promise<Product> => {
-    const response = await api.post("/products/", data);
+  create: async (data: Omit<Post, "id" | "created_at" | "updated_at">): Promise<Post> => {
+    const response = await api.post("/posts/", data);
     return response.data;
   },
 
-  update: async (id: number, data: Partial<Product>): Promise<Product> => {
-    const response = await api.patch(`/products/${id}/`, data);
+  update: async (id: number, data: Partial<Post>): Promise<Post> => {
+    const response = await api.patch(`/posts/${id}/`, data);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/products/${id}/`);
+    await api.delete(`/posts/${id}/`);
   },
 
   uploadImage: async (id: number, file: File): Promise<{ message: string; s3_key: string; image_url: string }> => {
@@ -142,7 +142,7 @@ export const productsApi = {
         Authorization: `Bearer ${Cookies.get("access_token")}`,
       },
     });
-    const response = await uploadApi.post(`/products/${id}/upload-image/`, formData);
+    const response = await uploadApi.post(`/posts/${id}/upload-image/`, formData);
     return response.data;
   },
 };

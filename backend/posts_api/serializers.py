@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from products_api.models import Product, Profile
+from posts_api.models import Posts, Profile
 
-from products_api.utils import get_s3_url
+from posts_api.utils import get_s3_url
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -10,7 +10,7 @@ class ProductSerializer(serializers.ModelSerializer):
     bw_image_url = serializers.SerializerMethodField()
 
     class Meta:
-        model = Product
+        model = Posts
         fields = "__all__"
         read_only_fields = [
             "created_at",

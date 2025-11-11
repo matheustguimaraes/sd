@@ -16,7 +16,7 @@ export default function FeedPage() {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["posts"],
     queryFn: () => productsApi.list(),
   });
 
@@ -43,7 +43,7 @@ export default function FeedPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => productsApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 
