@@ -24,9 +24,17 @@ export default function RegisterPage() {
       const loginResponse = await authApi.login(username, password);
       setAuthTokens(loginResponse.access, loginResponse.refresh);
       router.push("/feed");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Erro ao registrar");
-    } finally {
+    } catch (err: unknown) {
+      console.error("Registration error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (typeof err === "object" && err !== null && "response" in err) {
+        const axiosError = err as { response?: { data?: { error?: string; detail?: string } } };
+        const errorMessage = axiosError.response?.data?.error || axiosError.response?.data?.detail || "Erro ao registrar. Tente novamente.";
+        setError(errorMessage);
+      } else {
+        setError("Erro ao registrar. Tente novamente.");
+      }
       setLoading(false);
     }
   };
@@ -35,14 +43,17 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-black">SD Insta</h1>
+          <h1 className="text-3xl font-bold text-black">MDCC Nuvem - Insta</h1>
           <p className="mt-2 text-black/70">Crie sua conta para começar</p>
         </div>
         <h2 className="mb-6 text-xl font-semibold text-black">Registrar</h2>
-        
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="username" className="text-sm font-medium text-black">
+            <label
+              htmlFor="username"
+              className="text-sm font-medium text-black"
+            >
               Usuário
             </label>
             <input
@@ -70,7 +81,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-sm font-medium text-black">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium text-black"
+            >
               Senha
             </label>
             <input
@@ -103,4 +117,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

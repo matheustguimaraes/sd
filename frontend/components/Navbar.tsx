@@ -14,7 +14,7 @@ export default function Navbar({ leftElement, rightElements }: NavbarProps) {
 
   const defaultLeftElement = (
     <Link href="/feed" className="text-xl font-bold text-black">
-      SD Insta
+      MDCC Nuvem - Insta
     </Link>
   );
 
@@ -25,7 +25,12 @@ export default function Navbar({ leftElement, rightElements }: NavbarProps) {
       className="text-black hover:text-black/70"
       title="Novo post"
     >
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="h-6 w-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -40,7 +45,12 @@ export default function Navbar({ leftElement, rightElements }: NavbarProps) {
       className="text-black hover:text-black/70"
       title="Perfil"
     >
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="h-6 w-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -75,4 +85,3 @@ export default function Navbar({ leftElement, rightElements }: NavbarProps) {
     </nav>
   );
 }
-

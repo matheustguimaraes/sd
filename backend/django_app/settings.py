@@ -1,24 +1,36 @@
 from datetime import timedelta
 from pathlib import Path
+import os
 
-from products_api.environment_variables import (
+# from dotenv import load_dotenv
+
+# Carrega variáveis do .env antes de importar environment_variables
+# BASE_DIR = Path(__file__).resolve().parent.parent
+# env_path = BASE_DIR / '.env'
+# if env_path.exists():
+#     load_dotenv(env_path, override=True)
+
+from posts_api.environment_variables import (
+    AWS_ACCESS_KEY_ID_ENV,
+    AWS_S3_CUSTOM_DOMAIN_ENV,
+    AWS_S3_REGION_NAME_ENV,
+    AWS_SECRET_ACCESS_KEY_ENV,
+    AWS_STORAGE_BUCKET_NAME_ENV,
+    DEBUG_MODE,
     POSTGRES_DATABASE,
     POSTGRES_HOST,
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
+    USE_S3,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-mdcc-sd-dev-key-change-in-production"
-DEBUG = True
+DEBUG = DEBUG_MODE
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "backend",
-]
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -33,7 +45,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "django_filters",
     "corsheaders",
-    "products_api.apps.ProductsApiConfig",
+    "posts_api.apps.PostsApiConfig",
 ]
 
 MIDDLEWARE = [
@@ -41,9 +53,10 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # CSRF middleware removido - API usa JWT authentication
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "products_api.middleware.RequestLoggingMiddleware",
+    "posts_api.middleware.RequestLoggingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -101,32 +114,42 @@ TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Storage configuration
-if DEBUG:
-    # Use local filesystem storage for development
-    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-    MEDIA_ROOT = BASE_DIR / "media"
-    MEDIA_URL = "/media/"
-else:
-    # Use S3 for production
-    from products_api.environment_variables import (
-        AWS_ACCESS_KEY_ID,
-        AWS_SECRET_ACCESS_KEY,
-        AWS_STORAGE_BUCKET_NAME,
-        AWS_S3_REGION_NAME,
-    )
+STATIC_URL = "/staticfiles/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY
-    AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME
-    AWS_S3_REGION_NAME = AWS_S3_REGION_NAME
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    AWS_DEFAULT_ACL = "public-read"
+
+MEDIA_URL = "/mediafiles/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
+
+AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID_ENV
+AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY_ENV
+AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME_ENV
+AWS_S3_REGION_NAME = AWS_S3_REGION_NAME_ENV
+AWS_S3_CUSTOM_DOMAIN = AWS_S3_CUSTOM_DOMAIN_ENV
+AWS_DEFAULT_ACL = None
+AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+# s3 static settings
+STATIC_LOCATION = "static"
+STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
+STATICFILES_STORAGE = "posts_api.storage_backends.StaticStorage"
+# s3 public media settings
+PUBLIC_MEDIA_LOCATION = "media"
+
+
+if USE_S3:
+    # aws settings
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
+    DEFAULT_FILE_STORAGE = "posts_api.storage_backends.PublicMediaStorage"
+    # s3 private media settings
+    PRIVATE_MEDIA_LOCATION = "private"
+    PRIVATE_FILE_STORAGE = "posts_api.storage_backends.PrivateMediaStorage"
+else:
+    MEDIA_URL = "/mediafiles/"
+
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
@@ -145,12 +168,22 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
+    # Disable CSRF for API endpoints (using JWT authentication)
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+# Allow all origins for CORS
+CORS_ALLOW_ALL_ORIGINS = True
+
+# CSRF desabilitado completamente - API usa JWT authentication
+CSRF_COOKIE_SECURE = False
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_HTTPONLY = False
+# CSRF middleware removido, então esta configuração não é necessária
+# Mas mantida para compatibilidade caso algum código ainda referencie
+CSRF_TRUSTED_ORIGINS = []
 
 # Allow CORS for media files
 CORS_ALLOW_CREDENTIALS = True
@@ -164,6 +197,14 @@ CORS_ALLOWED_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
+]
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]
 
 SIMPLE_JWT = {

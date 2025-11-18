@@ -14,10 +14,13 @@ export default function NewPostPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!file) throw new Error("Selecione uma imagem");
+
+      setStatusMessage("Criando post...");
 
       const post = await productsApi.create({
         name: description || `Post ${new Date().toLocaleDateString()}`,
@@ -25,13 +28,18 @@ export default function NewPostPage() {
         price: "0.00",
       });
 
+      setStatusMessage("Enviando imagem original...");
+
       await productsApi.uploadImage(post.id, file);
+
+      setStatusMessage("Imagem enviada! Processando em segundo plano...");
 
       return post;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
       setUploading(false);
+      setStatusMessage(null);
       router.push("/feed");
     },
     onError: (error: Error) => {
@@ -46,6 +54,7 @@ export default function NewPostPage() {
         "Erro ao criar post";
       alert(`Erro ao criar post: ${errorMessage}`);
       setUploading(false);
+      setStatusMessage(null);
     },
   });
 
@@ -104,6 +113,23 @@ export default function NewPostPage() {
         </Link>,
       ]}
     >
+      {uploading && (
+        <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black/40 px-6">
+          <div className="flex max-w-sm flex-col items-center gap-4 rounded-lg bg-white p-6 text-center shadow-lg">
+            <span
+              className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent"
+              aria-hidden
+            />
+            <p className="text-sm font-medium text-black">
+              {statusMessage ?? "Processando..."}
+            </p>
+            <p className="text-xs text-black/60">
+              Você pode continuar navegando; a versão em preto e branco
+              aparecerá assim que ficar pronta.
+            </p>
+          </div>
+        </div>
+      )}
       <h2 className="mb-6 text-2xl font-bold text-black">Novo Post</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">

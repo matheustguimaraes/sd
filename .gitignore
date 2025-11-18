@@ -114,6 +114,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 **/*/.env*
+!**/.env.example
 
 # vercel
 **/*/.vercel
@@ -145,3 +146,53 @@ backend/*/staticfiles/
 **/*.pyzwz
 
 **/.next/
+
+
+# Local .tfvars files
+*.tfvars
+!terraform.tfvars.example
+**tf
+**terraform.tfstate
+**terraform.tfstate.backup
+**terraform.tfstate.lock
+**terraform.tfstate.lock.backup
+**terraform.tfstate.lock.backup.lock
+**terraform.tfstate.lock.backup.lock.backup
+**terraform.tfstate.lock.backup.lock.backup.backup
+**terraform.tfstate.lock.backup.lock.backup.backup.backup
+**/**tfplan
+**/**tfplan.json
+**/**tfplan.json.backup
+**/**tfplan.json.lock
+**/**tfplan.json.lock.backup
+**/**tfplan.json.lock.backup.lock
+**/**tfplan.json.lock.backup.lock.backup
+**/**tfplan.json.lock.backup.lock.backup.backup
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Ignore override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore lock files (optional, some teams prefer to commit this)
+.terraform.lock.hcl
+
+# Ignore backup files
+*.backup
+*.bak
+
+*.md
+**/.terraform

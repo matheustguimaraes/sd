@@ -7,10 +7,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
-from products_api.views import ProductViewSet, register_view, profile_view
+from posts_api.views import ProductViewSet, register_view, profile_view, image_upload
 
 router = DefaultRouter()
-router.register("products", ProductViewSet, basename="products")
+router.register("posts", ProductViewSet, basename="posts")
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -24,17 +24,20 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path("", include(router.urls)),
-    path("admin/", admin.site.urls),
-    path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("auth/register/", register_view, name="register"),
-    path("auth/profile/", profile_view, name="profile"),
-    path(
-        "swagger/",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-swagger-ui",
-    ),
+    path("api/", include([
+        path("", include(router.urls)),
+        path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+        path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+        path("auth/register/", register_view, name="register"),
+        path("auth/profile/", profile_view, name="profile"),
+        path("upload/", image_upload, name="image_upload"),
+        path(
+            "swagger/",
+            schema_view.with_ui("swagger", cache_timeout=0),
+            name="schema-swagger-ui",
+        ),
+        path("admin/", admin.site.urls),
+    ])),
 ]
 
 # Serve media files in development

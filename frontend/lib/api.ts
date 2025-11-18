@@ -1,7 +1,20 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Ensures the base URL always ends with /api
+const getApiBaseUrl = () => {
+  // Se NEXT_PUBLIC_API_URL estiver definido, usa ele
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    const url = process.env.NEXT_PUBLIC_API_URL;
+    return url.endsWith("/api") ? url : `${url}/api`;
+  }
+  
+  // Fallback: usa URL relativa (mesmo domínio) quando frontend e backend estão no mesmo ALB
+  // Isso funciona tanto no browser quanto no servidor Next.js
+  return "/api";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -21,6 +34,10 @@ api.interceptors.request.use((config) => {
       delete config.headers["content-type"];
     }
   }
+  // Ensures the baseURL is being used correctly
+  if (config.url && !config.url.startsWith("http")) {
+    config.url = config.url.startsWith("/") ? config.url : `/${config.url}`;
+  }
   return config;
 });
 
@@ -36,14 +53,16 @@ api.interceptors.response.use(
   }
 );
 
-export interface Product {
+export interface Post {
   id: number;
   name: string;
   description?: string;
   price: string;
   image_s3_key?: string;
+  image_bw_s3_key?: string;
   image_thumbnail_s3_key?: string;
   image_url?: string;
+  bw_image_url?: string;
   thumbnail_url?: string;
   created_at: string;
   updated_at: string;
@@ -90,28 +109,28 @@ export const authApi = {
 };
 
 export const productsApi = {
-  list: async (): Promise<Product[]> => {
-    const response = await api.get("/products/");
+  list: async (): Promise<Post[]> => {
+    const response = await api.get("/posts/");
     return response.data.results || response.data;
   },
 
-  get: async (id: number): Promise<Product> => {
-    const response = await api.get(`/products/${id}/`);
+  get: async (id: number): Promise<Post> => {
+    const response = await api.get(`/posts/${id}/`);
     return response.data;
   },
 
-  create: async (data: Omit<Product, "id" | "created_at" | "updated_at">): Promise<Product> => {
-    const response = await api.post("/products/", data);
+  create: async (data: Omit<Post, "id" | "created_at" | "updated_at">): Promise<Post> => {
+    const response = await api.post("/posts/", data);
     return response.data;
   },
 
-  update: async (id: number, data: Partial<Product>): Promise<Product> => {
-    const response = await api.patch(`/products/${id}/`, data);
+  update: async (id: number, data: Partial<Post>): Promise<Post> => {
+    const response = await api.patch(`/posts/${id}/`, data);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/products/${id}/`);
+    await api.delete(`/posts/${id}/`);
   },
 
   uploadImage: async (id: number, file: File): Promise<{ message: string; s3_key: string; image_url: string }> => {
@@ -123,7 +142,7 @@ export const productsApi = {
         Authorization: `Bearer ${Cookies.get("access_token")}`,
       },
     });
-    const response = await uploadApi.post(`/products/${id}/upload-image/`, formData);
+    const response = await uploadApi.post(`/posts/${id}/upload-image/`, formData);
     return response.data;
   },
 };
