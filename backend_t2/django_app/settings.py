@@ -15,19 +15,19 @@ from environment_variables import (
     AWS_S3_CUSTOM_DOMAIN_ENV,
     AWS_SECRET_ACCESS_KEY_ENV,
     AWS_STORAGE_BUCKET_NAME_ENV,
-    # DEBUG_MODE,
     POSTGRES_DATABASE,
     POSTGRES_HOST,
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
-    # USE_S3_ENV,
+    USE_S3_ENV,
+    DEBUG_MODE,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-mdcc-sd-dev-key-change-in-production"
-DEBUG = True
+DEBUG = DEBUG_MODE
 
 ALLOWED_HOSTS = ["*"]
 
@@ -118,7 +118,7 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-USE_S3 = False
+USE_S3 = USE_S3_ENV
 print(f"settings.py USE_S3: {USE_S3}")
 
 if USE_S3:
