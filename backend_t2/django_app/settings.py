@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "django_filters",
     "corsheaders",
     "posts_api.apps.PostsApiConfig",
-    "products_api.apps.ProductsApiConfig",
+    # "products_api.apps.ProductsApiConfig",
     # Celery
     "django_celery_results",
     "django_celery_beat",

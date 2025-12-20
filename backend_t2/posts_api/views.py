@@ -12,7 +12,6 @@ from posts_api.models import Posts, Profile
 from posts_api.serializers import ProductSerializer, ProfileSerializer
 from posts_api.utils import (
     log_crud_action,
-    publish_to_sns,
 )
 
 from datetime import datetime
@@ -21,6 +20,7 @@ from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render
 
 from posts_api.models import UploadPrivate
+from posts_api.tasks import process_image_task
 
 
 def image_upload(request):
@@ -132,11 +132,12 @@ class ProductViewSet(viewsets.ModelViewSet):
 
             message = {
                 "action": "process_image",
-                "product_id": post.id,
-                "s3_key": upload.file.name,
+                "post_id": post.id,
+                "upload_id": upload.id,
                 "timestamp": datetime.now().isoformat(),
             }
-            publish_to_sns(message)
+            # publish_to_sns(message)
+            process_image_task.delay(message)
             print(f"upload_image message published: {message}")
 
             log_crud_action(

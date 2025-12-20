@@ -54,4 +54,4 @@ class Posts(models.Model):
         verbose_name_plural = "Posts"
 
     def __str__(self):
-        return f"{self.id} - {self.name} - R${self.price}"
+        return f"{self.id} - {self.name} - R${self.price} - {self.image_s3_key} - {self.image_bw_s3_key} - {self.image_thumbnail_s3_key}"
