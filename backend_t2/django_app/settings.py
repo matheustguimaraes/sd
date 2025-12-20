@@ -122,6 +122,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 USE_S3 = USE_S3_ENV
 print(f"settings.py USE_S3: {USE_S3}")
 
+AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID_ENV
+AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY_ENV
+AWS_S3_ENDPOINT_URL = AWS_S3_ENDPOINT_URL_ENV
+MINIO_ACCESS_URL = MINIO_ACCESS_URL_ENV
+
 if USE_S3:
     # Define the URL prefix for static files
     STATIC_URL = f"{AWS_S3_ENDPOINT_URL_ENV}-static/"
@@ -135,13 +140,15 @@ if USE_S3:
     ]
 
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
     AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME_ENV
+    AWS_FILE_OVERWRITE = True
+    # AWS_DEFAULT_ACL = None
+    AWS_S3_OBJECT_PARAMETERS = {
+        "CacheControl": "max-age=86400",
+    }
 
-    AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID_ENV
-    AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY_ENV
-    AWS_S3_ENDPOINT_URL = AWS_S3_ENDPOINT_URL_ENV
-    MINIO_ACCESS_URL = MINIO_ACCESS_URL_ENV
 else:
     STATIC_URL = "/staticfiles/"
     STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
@@ -238,9 +245,30 @@ CELERY_SEND_EVENTS = True
 
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": AWS_ACCESS_KEY_ID_ENV,
+            "secret_key": AWS_SECRET_ACCESS_KEY_ENV,
+            "bucket_name": AWS_STORAGE_BUCKET_NAME_ENV,
+            "endpoint_url": AWS_S3_ENDPOINT_URL_ENV,
+        },
     },
     "staticfiles": {
-        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",  # or similar S3 backend
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": AWS_ACCESS_KEY_ID_ENV,
+            "secret_key": AWS_SECRET_ACCESS_KEY_ENV,
+            "bucket_name": f"{AWS_STORAGE_BUCKET_NAME_ENV}-static",
+            "endpoint_url": AWS_S3_ENDPOINT_URL_ENV,
+        },
+    },
+    "mediafiles": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": AWS_ACCESS_KEY_ID_ENV,
+            "secret_key": AWS_SECRET_ACCESS_KEY_ENV,
+            "bucket_name": f"{AWS_STORAGE_BUCKET_NAME_ENV}-media",
+            "endpoint_url": AWS_S3_ENDPOINT_URL_ENV,
+        },
     },
 }

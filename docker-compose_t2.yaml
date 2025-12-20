@@ -22,8 +22,8 @@ services:
     container_name: mdcc_nuvem_minio
     image: "quay.io/minio/minio:RELEASE.2025-03-12T18-04-18Z"
     ports:
-      - "127.0.0.1:9900:9000"
-      - "127.0.0.1:9901:9001"
+      - "9900:9000"
+      - "9901:9001"
     command: ["server", "--console-address", ":9001", "/data"]
     environment:
       MINIO_ROOT_USER: minio
@@ -42,6 +42,9 @@ services:
       /usr/bin/mc mb dockerminio/mdcc-nuvem-images-t2-ufc;
       /usr/bin/mc mb dockerminio/mdcc-nuvem-images-t2-ufc-static;
       /usr/bin/mc mb dockerminio/mdcc-nuvem-images-t2-ufc-media;
+      /usr/bin/mc anonymous set public dockerminio/mdcc-nuvem-images-t2-ufc-static;
+      /usr/bin/mc anonymous set public dockerminio/mdcc-nuvem-images-t2-ufc-media;
+      /usr/bin/mc anonymous set public dockerminio/mdcc-nuvem-images-t2-ufc;
       exit 0;
       "
 
@@ -71,12 +74,14 @@ services:
     command: ["bash", "./entrypoint.dev.sh"]
     restart: on-failure
     env_file:
-      - ./backend_t2/.env
+      - ./backend_t2/.env.docker
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       - postgres
       - rabbitmq
+      - minio
+      - createbuckets
 
   celery:
     container_name: celery
@@ -94,7 +99,7 @@ services:
     volumes:
       - ./backend_t2:/usr/src/app/:cached
       - ./backend_t2:/mdcc_nuvem_backend_t2:cached
-    env_file: backend_t2/docker/.env
+    env_file: ./backend_t2/.env
     depends_on:
       - postgres
       - rabbitmq
@@ -107,7 +112,7 @@ services:
       context: ./backend_t2
       dockerfile: docker/celery_beat/dev/Dockerfile
     command: venv/bin/python3 -m celery -A celery_settings:app beat -l INFO
-    env_file: backend_t2/docker/.env
+    env_file: ./backend_t2/.env
     depends_on:
       - celery
 
@@ -125,7 +130,7 @@ services:
     env_file:
       - ./frontend/.env
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       - backend_t2
 
