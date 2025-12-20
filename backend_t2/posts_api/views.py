@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import get_user_model
-from posts_api.environment_variables import USE_S3, SERVICE_API_TOKEN
+from environment_variables import USE_S3, SERVICE_API_TOKEN
 from posts_api.models import Posts, Profile
 from posts_api.serializers import ProductSerializer, ProfileSerializer
 from posts_api.utils import (

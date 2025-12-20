@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from django.conf import settings
 from django.core.files.storage import default_storage
-from products_api.environment_variables import (
+from environment_variables import (
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
     AWS_STORAGE_BUCKET_NAME,

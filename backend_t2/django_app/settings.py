@@ -10,7 +10,7 @@ import os
 # if env_path.exists():
 #     load_dotenv(env_path, override=True)
 
-from posts_api.environment_variables import (
+from environment_variables import (
     AWS_ACCESS_KEY_ID_ENV,
     AWS_S3_CUSTOM_DOMAIN_ENV,
     AWS_S3_REGION_NAME_ENV,
@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     "django_filters",
     "corsheaders",
     "posts_api.apps.PostsApiConfig",
+    # Celery
+    "django_celery_results",
+    "django_celery_beat",
+    "storages",
 ]
 
 MIDDLEWARE = [
@@ -217,3 +221,20 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
 }
+
+
+# Celery Configuration
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "default"
+CELERY_BROKER_URL = "amqp://admin:admin@rabbitmq:5672"
+CELERY_RESULT_EXTENDED = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TIMEZONE = "America/Sao_Paulo"
+
+# Task Events and Monitoring
+CELERY_WORKER_SEND_TASK_EVENTS = True
+CELERY_TASK_SEND_EVENTS = True
+CELERY_SEND_EVENTS = True

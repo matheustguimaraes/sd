@@ -3,17 +3,17 @@ import json
 from datetime import datetime
 from django.core.files.storage import default_storage
 from storages.backends.s3boto3 import S3Boto3Storage
-from posts_api.environment_variables import (
+from environment_variables import (
     AWS_ACCESS_KEY_ID_ENV,
     AWS_SECRET_ACCESS_KEY_ENV,
     AWS_S3_REGION_NAME_ENV,
     DYNAMODB_REGION_ENV,
     DYNAMODB_TABLE_NAME_ENV,
     RABBITMQ_HOST,
-    RABBITMQ_PORT_ENV,
-    RABBITMQ_USER_ENV,
-    RABBITMQ_PASSWORD_ENV,
-    RABBITMQ_QUEUE_NAME_ENV,
+    RABBITMQ_PORT,
+    RABBITMQ_USER,
+    RABBITMQ_PASSWORD,
+    RABBITMQ_QUEUE_NAME_T2,
     SNS_TOPIC_ARN,
     DEBUG_MODE,
 )
@@ -136,17 +136,17 @@ def publish_to_rabbitmq(message):
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=RABBITMQ_HOST,
-                port=RABBITMQ_PORT_ENV,
-                credentials=pika.PlainCredentials(RABBITMQ_USER_ENV, RABBITMQ_PASSWORD_ENV),
+                port=RABBITMQ_PORT,
+                credentials=pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD),
             )
         )
         channel = connection.channel()
 
-        channel.queue_declare(queue=RABBITMQ_QUEUE_NAME_ENV, durable=True)
+        channel.queue_declare(queue=RABBITMQ_QUEUE_NAME_T2, durable=True)
 
         channel.basic_publish(
             exchange="",
-            routing_key=RABBITMQ_QUEUE_NAME_ENV,
+            routing_key=RABBITMQ_QUEUE_NAME_T2,
             body=json.dumps(message),
             properties=pika.BasicProperties(delivery_mode=2),
         )

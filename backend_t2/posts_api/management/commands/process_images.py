@@ -10,12 +10,12 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
 from posts_api.models import Posts
-from posts_api.environment_variables import (
+from environment_variables import (
     RABBITMQ_HOST,
-    RABBITMQ_PORT_ENV,
-    RABBITMQ_USER_ENV,
-    RABBITMQ_PASSWORD_ENV,
-    RABBITMQ_QUEUE_NAME_ENV,
+    RABBITMQ_PORT,
+    RABBITMQ_USER,
+    RABBITMQ_PASSWORD,
+    RABBITMQ_QUEUE_NAME_T2,
 )
 
 
@@ -29,16 +29,18 @@ class Command(BaseCommand):
             connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
                     host=RABBITMQ_HOST,
-                    port=RABBITMQ_PORT_ENV,
-                    credentials=pika.PlainCredentials(RABBITMQ_USER_ENV, RABBITMQ_PASSWORD_ENV),
+                    port=RABBITMQ_PORT,
+                    credentials=pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD),
                 )
             )
             channel = connection.channel()
 
-            channel.queue_declare(queue=RABBITMQ_QUEUE_NAME_ENV, durable=True)
+            channel.queue_declare(queue=RABBITMQ_QUEUE_NAME_T2, durable=True)
 
             self.stdout.write(
-                self.style.SUCCESS(f"Connected to RabbitMQ. Waiting for messages in queue '{RABBITMQ_QUEUE_NAME_ENV}'...")
+                self.style.SUCCESS(
+                    f"Connected to RabbitMQ. Waiting for messages in queue '{RABBITMQ_QUEUE_NAME_T2}'..."
+                )
             )
 
             def callback(ch, method, properties, body):
@@ -57,7 +59,7 @@ class Command(BaseCommand):
                     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
             channel.basic_qos(prefetch_count=1)
-            channel.basic_consume(queue=RABBITMQ_QUEUE_NAME_ENV, on_message_callback=callback)
+            channel.basic_consume(queue=RABBITMQ_QUEUE_NAME_T2, on_message_callback=callback)
 
             self.stdout.write(self.style.SUCCESS("Waiting for messages. To exit press CTRL+C"))
             channel.start_consuming()
