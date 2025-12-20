@@ -51,21 +51,38 @@ services:
       - postgres
       - rabbitmq
 
-  rabbitmq_worker:
-    container_name: mdcc_sd_rabbitmq_worker
+  celery:
+    container_name: celery
+    platform: linux/amd64
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ./mdcc_sd_backend
+      dockerfile: docker/celery/dev/Dockerfile
+    # command: [ "bash", "./docker/celery/dev/entrypoint.dev.sh" ]
+    command: python3 -m celery -A celery_re:app worker -E
+    healthcheck:
+      test: ["CMD", "venv/bin/python3", "-m", "celery", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     volumes:
-      - ./backend:/app:cached
-    command: python manage.py process_images
-    restart: on-failure
-    env_file:
-      - ./backend/.env
+      - ./mdcc_sd_backend:/usr/src/app/:cached
+      - ./mdcc_sd_backend:/mdcc_sd_backend:cached
+    env_file: mdcc_sd_backend/docker/.env
     depends_on:
       - postgres
-      - backend
       - rabbitmq
+      - mdcc_sd_backend
+
+  celery_beat:
+    container_name: celery_beat
+    platform: linux/amd64
+    build:
+      context: ./mdcc_sd_backend
+      dockerfile: celery_beat.prod.Dockerfile
+    command: venv/bin/python3 -m celery -A celery_re:app beat -l INFO
+    env_file: mdcc_sd_backend/docker/.env
+    depends_on:
+      - celery
 
   frontend:
     container_name: mdcc_sd_frontend
@@ -88,4 +105,5 @@ services:
 volumes:
   mdcc_sd_db_storage:
   rabbitmq_data:
-
+  celery_data:
+  celery_beat_data:
