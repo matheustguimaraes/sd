@@ -13,7 +13,7 @@ from environment_variables import (
     RABBITMQ_PORT,
     RABBITMQ_USER,
     RABBITMQ_PASSWORD,
-    RABBITMQ_QUEUE_NAME_T2,
+    RABBITMQ_QUEUE_NAME_ENV,
     SNS_TOPIC_ARN,
     DEBUG_MODE,
 )
@@ -142,11 +142,11 @@ def publish_to_rabbitmq(message):
         )
         channel = connection.channel()
 
-        channel.queue_declare(queue=RABBITMQ_QUEUE_NAME_T2, durable=True)
+        channel.queue_declare(queue=RABBITMQ_QUEUE_NAME_ENV, durable=True)
 
         channel.basic_publish(
             exchange="",
-            routing_key=RABBITMQ_QUEUE_NAME_T2,
+            routing_key=RABBITMQ_QUEUE_NAME_ENV,
             body=json.dumps(message),
             properties=pika.BasicProperties(delivery_mode=2),
         )

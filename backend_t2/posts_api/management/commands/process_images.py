@@ -15,7 +15,7 @@ from environment_variables import (
     RABBITMQ_PORT,
     RABBITMQ_USER,
     RABBITMQ_PASSWORD,
-    RABBITMQ_QUEUE_NAME_T2,
+    RABBITMQ_QUEUE_NAME_ENV,
 )
 
 
@@ -35,11 +35,11 @@ class Command(BaseCommand):
             )
             channel = connection.channel()
 
-            channel.queue_declare(queue=RABBITMQ_QUEUE_NAME_T2, durable=True)
+            channel.queue_declare(queue=RABBITMQ_QUEUE_NAME_ENV, durable=True)
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Connected to RabbitMQ. Waiting for messages in queue '{RABBITMQ_QUEUE_NAME_T2}'..."
+                    f"Connected to RabbitMQ. Waiting for messages in queue '{RABBITMQ_QUEUE_NAME_ENV}'..."
                 )
             )
 
@@ -59,7 +59,7 @@ class Command(BaseCommand):
                     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
             channel.basic_qos(prefetch_count=1)
-            channel.basic_consume(queue=RABBITMQ_QUEUE_NAME_T2, on_message_callback=callback)
+            channel.basic_consume(queue=RABBITMQ_QUEUE_NAME_ENV, on_message_callback=callback)
 
             self.stdout.write(self.style.SUCCESS("Waiting for messages. To exit press CTRL+C"))
             channel.start_consuming()

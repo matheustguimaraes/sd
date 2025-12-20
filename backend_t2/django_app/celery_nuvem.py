@@ -4,17 +4,14 @@ import os
 
 import django
 from celery import Celery
-from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_app.settings")
 
 django.setup()
 
-app = Celery("django_app")
+app = Celery("backend_t2")
 app.config_from_object("django.conf:settings", namespace="CELERY")
-app.autodiscover_tasks(
-    settings.INSTALLED_APPS,
-)
+app.autodiscover_tasks()
 app.conf.worker_hijack_root_logger = False
 
 
