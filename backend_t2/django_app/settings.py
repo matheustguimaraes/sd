@@ -15,19 +15,19 @@ from environment_variables import (
     AWS_S3_CUSTOM_DOMAIN_ENV,
     AWS_SECRET_ACCESS_KEY_ENV,
     AWS_STORAGE_BUCKET_NAME_ENV,
-    DEBUG_MODE,
+    # DEBUG_MODE,
     POSTGRES_DATABASE,
     POSTGRES_HOST,
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
-    USE_S3_ENV,
+    # USE_S3_ENV,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-mdcc-sd-dev-key-change-in-production"
-DEBUG = DEBUG_MODE
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -56,7 +56,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    # CSRF middleware removido - API usa JWT authentication
     # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "posts_api.middleware.RequestLoggingMiddleware",
@@ -119,7 +118,8 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-USE_S3 = USE_S3_ENV
+USE_S3 = False
+print(f"settings.py USE_S3: {USE_S3}")
 
 if USE_S3:
     # aws settings

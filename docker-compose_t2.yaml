@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   rabbitmq:
-    container_name: mdcc_sd_rabbitmq
+    container_name: mdcc_nuvem_rabbitmq
     image: rabbitmq:3-management-alpine
     ports:
       - "5672:5672"
@@ -19,32 +19,32 @@ services:
       retries: 5
 
   postgres:
-    container_name: mdcc_sd_postgres
+    container_name: mdcc_nuvem_postgres
     image: postgres:14-alpine
     volumes:
-      - mdcc_sd_db_storage:/var/lib/postgresql/data
+      - mdcc_nuvem_db_storage:/var/lib/postgresql/data
       - ./init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
     restart: on-failure
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=mdcc_sd_db
+      - POSTGRES_DB=mdcc_nuvem_db
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
     ports:
       - "5433:5432"
 
-  backend:
-    container_name: mdcc_sd_backend
+  backend_t2:
+    container_name: mdcc_nuvem_backend_t2
     build:
-      context: ./backend
+      context: ./backend_t2
       dockerfile: Dockerfile
     volumes:
-      - ./backend:/app:cached
+      - ./backend_t2:/app:cached
     command: ["bash", "./entrypoint.dev.sh"]
     restart: on-failure
     env_file:
-      - ./backend/.env
+      - ./backend_t2/.env
     ports:
       - "8000:8000"
     depends_on:
@@ -55,37 +55,37 @@ services:
     container_name: celery
     platform: linux/amd64
     build:
-      context: ./mdcc_sd_backend
+      context: ./backend_t2
       dockerfile: docker/celery/dev/Dockerfile
     # command: [ "bash", "./docker/celery/dev/entrypoint.dev.sh" ]
-    command: python3 -m celery -A celery_re:app worker -E
+    command: python3 -m celery -A celery_settings:app worker -E
     healthcheck:
       test: ["CMD", "venv/bin/python3", "-m", "celery", "inspect", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
     volumes:
-      - ./mdcc_sd_backend:/usr/src/app/:cached
-      - ./mdcc_sd_backend:/mdcc_sd_backend:cached
-    env_file: mdcc_sd_backend/docker/.env
+      - ./backend_t2:/usr/src/app/:cached
+      - ./backend_t2:/mdcc_nuvem_backend_t2:cached
+    env_file: backend_t2/docker/.env
     depends_on:
       - postgres
       - rabbitmq
-      - mdcc_sd_backend
+      - backend_t2
 
   celery_beat:
     container_name: celery_beat
     platform: linux/amd64
     build:
-      context: ./mdcc_sd_backend
-      dockerfile: celery_beat.prod.Dockerfile
-    command: venv/bin/python3 -m celery -A celery_re:app beat -l INFO
-    env_file: mdcc_sd_backend/docker/.env
+      context: ./backend_t2
+      dockerfile: docker/celery_beat/dev/Dockerfile
+    command: venv/bin/python3 -m celery -A celery_settings:app beat -l INFO
+    env_file: backend_t2/docker/.env
     depends_on:
       - celery
 
   frontend:
-    container_name: mdcc_sd_frontend
+    container_name: mdcc_nuvem_frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -100,10 +100,10 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      - backend_t2
 
 volumes:
-  mdcc_sd_db_storage:
+  mdcc_nuvem_db_storage:
   rabbitmq_data:
   celery_data:
   celery_beat_data:
