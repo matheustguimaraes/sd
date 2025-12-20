@@ -12,9 +12,10 @@ import os
 
 from environment_variables import (
     AWS_ACCESS_KEY_ID_ENV,
-    AWS_S3_CUSTOM_DOMAIN_ENV,
+    AWS_S3_ENDPOINT_URL_ENV,
     AWS_SECRET_ACCESS_KEY_ENV,
     AWS_STORAGE_BUCKET_NAME_ENV,
+    MINIO_ACCESS_URL_ENV,
     POSTGRES_DATABASE,
     POSTGRES_HOST,
     POSTGRES_PASSWORD,
@@ -122,17 +123,19 @@ USE_S3 = USE_S3_ENV
 print(f"settings.py USE_S3: {USE_S3}")
 
 if USE_S3:
-    # aws settings
+    STATIC_URL = "/static/"
+    STATICFILES_LOCATION = "static"
+    STATICFILES_STORAGE = "posts_api.storage_backends.StaticS3Boto3Storage"
+
+    MEDIA_URL = "/media/"
+    DEFAULT_FILE_STORAGE = "posts_api.storage_backends.S3MediaStorage"
+
     AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID_ENV
     AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY_ENV
     AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME_ENV
-    AWS_DEFAULT_ACL = "public-read"
-    AWS_S3_CUSTOM_DOMAIN = AWS_S3_CUSTOM_DOMAIN_ENV
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    # s3 static settings
-    AWS_LOCATION = "static"
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+    AWS_S3_ENDPOINT_URL = AWS_S3_ENDPOINT_URL_ENV
+    MINIO_ACCESS_URL = MINIO_ACCESS_URL_ENV
 else:
     STATIC_URL = "/staticfiles/"
     STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
