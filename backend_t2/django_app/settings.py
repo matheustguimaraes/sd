@@ -13,7 +13,6 @@ import os
 from environment_variables import (
     AWS_ACCESS_KEY_ID_ENV,
     AWS_S3_CUSTOM_DOMAIN_ENV,
-    AWS_S3_REGION_NAME_ENV,
     AWS_SECRET_ACCESS_KEY_ENV,
     AWS_STORAGE_BUCKET_NAME_ENV,
     DEBUG_MODE,
@@ -22,7 +21,7 @@ from environment_variables import (
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
-    USE_S3,
+    USE_S3_ENV,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -118,41 +117,30 @@ TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-STATIC_URL = "/staticfiles/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
-
-
-MEDIA_URL = "/mediafiles/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
-
-AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID_ENV
-AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY_ENV
-AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME_ENV
-AWS_S3_REGION_NAME = AWS_S3_REGION_NAME_ENV
-AWS_S3_CUSTOM_DOMAIN = AWS_S3_CUSTOM_DOMAIN_ENV
-AWS_DEFAULT_ACL = None
-AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-# s3 static settings
-STATIC_LOCATION = "static"
-STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
-STATICFILES_STORAGE = "posts_api.storage_backends.StaticStorage"
-# s3 public media settings
-PUBLIC_MEDIA_LOCATION = "media"
-
+USE_S3 = USE_S3_ENV
 
 if USE_S3:
     # aws settings
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
-    DEFAULT_FILE_STORAGE = "posts_api.storage_backends.PublicMediaStorage"
-    # s3 private media settings
-    PRIVATE_MEDIA_LOCATION = "private"
-    PRIVATE_FILE_STORAGE = "posts_api.storage_backends.PrivateMediaStorage"
+    AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID_ENV
+    AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY_ENV
+    AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME_ENV
+    AWS_DEFAULT_ACL = "public-read"
+    AWS_S3_CUSTOM_DOMAIN = AWS_S3_CUSTOM_DOMAIN_ENV
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+    # s3 static settings
+    AWS_LOCATION = "static"
+    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
+    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 else:
-    MEDIA_URL = "/mediafiles/"
+    STATIC_URL = "/staticfiles/"
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+
+MEDIA_URL = "/mediafiles/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 
 
 REST_FRAMEWORK = {

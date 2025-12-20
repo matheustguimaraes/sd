@@ -36,7 +36,7 @@ DYNAMODB_TABLE_NAME_ENV = os.environ.get("DYNAMODB_TABLE_NAME", "crud_logs")
 
 SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:948532068149:mdcc-nuvem-image-processing-topic")
 
-USE_S3 = os.environ.get("USE_S3", "true").upper() == "TRUE"
+USE_S3_ENV = os.environ.get("USE_S3", "true").upper() == "TRUE"
 
 DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").upper() == "TRUE"
 print(f"DEBUG_MODE: {os.environ.get('DEBUG_MODE')}")

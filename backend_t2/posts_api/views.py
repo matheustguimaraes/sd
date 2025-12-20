@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import get_user_model
-from environment_variables import USE_S3, SERVICE_API_TOKEN
+from environment_variables import USE_S3_ENV, SERVICE_API_TOKEN
 from posts_api.models import Posts, Profile
 from posts_api.serializers import ProductSerializer, ProfileSerializer
 from posts_api.utils import (
@@ -27,7 +27,7 @@ def image_upload(request):
     if request.method == "POST":
         image_file = request.FILES["image_file"]
 
-        if USE_S3:
+        if USE_S3_ENV:
             upload = UploadPrivate(file=image_file)
             upload.save()
             image_url = upload.file.url
