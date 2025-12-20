@@ -1,6 +1,7 @@
 # S3 Bucket for images
 resource "aws_s3_bucket" "images" {
-  bucket = var.s3_bucket_name
+  bucket        = var.s3_bucket_name
+  force_destroy = true
 
   tags = {
     Name = "${var.project_name}-images-bucket"
@@ -65,8 +66,9 @@ resource "aws_s3_bucket_policy" "images" {
 
 # S3 Bucket for Terraform State
 resource "aws_s3_bucket" "terraform_state" {
-  count  = var.terraform_state_bucket_name != "" ? 1 : 0
-  bucket = var.terraform_state_bucket_name
+  count         = var.terraform_state_bucket_name != "" ? 1 : 0
+  bucket        = var.terraform_state_bucket_name
+  force_destroy = true
 
   tags = {
     Name        = "${var.project_name}-terraform-state"
