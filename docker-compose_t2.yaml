@@ -20,30 +20,30 @@ services:
 
   minio:
     container_name: mdcc_nuvem_minio
-    image: minio/minio:latest
+    image: "quay.io/minio/minio:RELEASE.2025-03-12T18-04-18Z"
     ports:
-      - 9000:9000
-      - 9001:9001
+      - "127.0.0.1:9900:9000"
+      - "127.0.0.1:9901:9001"
+    command: ["server", "--console-address", ":9001", "/data"]
     environment:
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: minio123
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
 
-  minio_client:
-    container_name: mdcc_nuvem_minio_client
-    image: minio/mc:latest
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc config host rm expo;
-      /usr/bin/mc config host add --quiet --api s3v4 local http://minio:9000 minio minio123;
-      /usr/bin/mc rb --force local/<your-bucket-name>/;
-      /usr/bin/mc mb --quiet local/<your-bucket-name>/;
-      /usr/bin/mc policy set public local/<your-bucket-name>;
-      "
+  createbuckets:
+    container_name: mdcc_nuvem_createbuckets
+    image: quay.io/minio/mc:RELEASE.2025-03-12T17-29-24Z
     depends_on:
       - minio
+    restart: on-failure
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set dockerminio http://minio:9000 minio minio123;
+      /usr/bin/mc mb dockerminio/mdcc-nuvem-images-t2-ufc;
+      /usr/bin/mc mb dockerminio/mdcc-nuvem-images-t2-ufc-static;
+      /usr/bin/mc mb dockerminio/mdcc-nuvem-images-t2-ufc-media;
+      exit 0;
+      "
 
   postgres:
     container_name: mdcc_nuvem_postgres

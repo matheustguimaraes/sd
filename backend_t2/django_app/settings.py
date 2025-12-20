@@ -123,17 +123,23 @@ USE_S3 = USE_S3_ENV
 print(f"settings.py USE_S3: {USE_S3}")
 
 if USE_S3:
-    STATIC_URL = "/static/"
-    STATICFILES_LOCATION = "static"
-    STATICFILES_STORAGE = "posts_api.storage_backends.StaticS3Boto3Storage"
+    # Define the URL prefix for static files
+    STATIC_URL = f"{AWS_S3_ENDPOINT_URL_ENV}-static/"
 
-    MEDIA_URL = "/media/"
-    DEFAULT_FILE_STORAGE = "posts_api.storage_backends.S3MediaStorage"
+    # Define the absolute path to the directory where all static files will be collected for deployment
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+    # Define additional directories where Django will look for static files during development (optional)
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "static"),
+    ]
+
+    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+    AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME_ENV
 
     AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID_ENV
     AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY_ENV
-    AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME_ENV
-
     AWS_S3_ENDPOINT_URL = AWS_S3_ENDPOINT_URL_ENV
     MINIO_ACCESS_URL = MINIO_ACCESS_URL_ENV
 else:
@@ -229,3 +235,12 @@ CELERY_TIMEZONE = "America/Sao_Paulo"
 CELERY_WORKER_SEND_TASK_EVENTS = True
 CELERY_TASK_SEND_EVENTS = True
 CELERY_SEND_EVENTS = True
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",  # or similar S3 backend
+    },
+}
