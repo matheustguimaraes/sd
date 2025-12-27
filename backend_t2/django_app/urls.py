@@ -22,11 +22,11 @@ router.register("posts", ProductViewSet, basename="posts")
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="MDCC SD Image Processing API",
+        title="MDCC Nuvem Image Processing API",
         default_version="v1",
         description="API para processamento de imagens com AWS S3",
-        terms_of_service="https://mdcc.sd.br",
-        contact=openapi.Contact(email="mdcc.sd@gmail.com"),
+        terms_of_service="https://ufc.br",
+        contact=openapi.Contact(email="ufc@gmail.com"),
     ),
     public=True,
 )
