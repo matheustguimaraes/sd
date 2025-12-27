@@ -7,7 +7,14 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
-from posts_api.views import ProductViewSet, register_view, profile_view, image_upload
+from posts_api.views import (
+    ProductViewSet,
+    register_view,
+    profile_view,
+    image_upload,
+    login_page_view,
+    register_page_view,
+)
 
 router = DefaultRouter()
 router.register("posts", ProductViewSet, basename="posts")
@@ -29,6 +36,8 @@ urlpatterns = [
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/register/", register_view, name="register"),
     path("auth/profile/", profile_view, name="profile"),
+    path("login/", login_page_view, name="login_page"),
+    path("register/", register_page_view, name="register_page"),
     path("upload/", image_upload, name="image_upload"),
     path(
         "swagger/",

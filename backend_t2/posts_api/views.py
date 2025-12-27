@@ -6,7 +6,9 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate, login
+from django.shortcuts import render, redirect
+from rest_framework_simplejwt.tokens import RefreshToken
 from environment_variables import USE_S3_ENV, SERVICE_API_TOKEN
 from posts_api.models import Posts, Profile
 from posts_api.serializers import ProductSerializer, ProfileSerializer
@@ -17,7 +19,6 @@ from posts_api.utils import (
 from datetime import datetime
 
 from django.core.files.storage import FileSystemStorage
-from django.shortcuts import render
 
 from posts_api.models import UploadPrivate
 from posts_api.tasks import process_image_task
@@ -256,3 +257,69 @@ def register_view(request):
     user = User.objects.create_user(username=username, email=email, password=password)
     Profile.objects.create(user=user)
     return Response({"message": "User created successfully"}, status=201)
+
+
+def login_page_view(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        if not username or not password:
+            return render(request, "login.html", {"error": "Usuário e senha são obrigatórios"})
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            request.session["access_token"] = access_token
+            request.session["refresh_token"] = refresh_token
+            request.session["user_id"] = user.id
+
+            return redirect("/admin/")
+        else:
+            return render(request, "login.html", {"error": "Credenciais inválidas"})
+
+    return render(request, "login.html")
+
+
+def register_page_view(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        if not username or not email or not password:
+            return render(request, "register.html", {"error": "Todos os campos são obrigatórios"})
+
+        User = get_user_model()
+
+        if User.objects.filter(username=username).exists():
+            return render(request, "register.html", {"error": "Usuário já existe"})
+
+        if User.objects.filter(email=email).exists():
+            return render(request, "register.html", {"error": "Email já está em uso"})
+
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            Profile.objects.create(user=user)
+
+            login(request, user)
+
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            request.session["access_token"] = access_token
+            request.session["refresh_token"] = refresh_token
+            request.session["user_id"] = user.id
+
+            return redirect("/admin/")
+        except Exception as e:
+            return render(request, "register.html", {"error": f"Erro ao criar usuário: {str(e)}"})
+
+    return render(request, "register.html")
