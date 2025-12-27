@@ -14,6 +14,7 @@ from posts_api.views import (
     image_upload,
     login_page_view,
     register_page_view,
+    feed_page_view,
 )
 
 router = DefaultRouter()
@@ -38,6 +39,7 @@ urlpatterns = [
     path("auth/profile/", profile_view, name="profile"),
     path("login/", login_page_view, name="login_page"),
     path("register/", register_page_view, name="register_page"),
+    path("feed/", feed_page_view, name="feed_page"),
     path("upload/", image_upload, name="image_upload"),
     path(
         "swagger/",

@@ -14,6 +14,7 @@ from posts_api.models import Posts, Profile
 from posts_api.serializers import ProductSerializer, ProfileSerializer
 from posts_api.utils import (
     log_crud_action,
+    get_s3_url,
 )
 
 from datetime import datetime
@@ -280,7 +281,7 @@ def login_page_view(request):
             request.session["refresh_token"] = refresh_token
             request.session["user_id"] = user.id
 
-            return redirect("/admin/")
+            return redirect("/feed/")
         else:
             return render(request, "login.html", {"error": "Credenciais inválidas"})
 
@@ -318,8 +319,31 @@ def register_page_view(request):
             request.session["refresh_token"] = refresh_token
             request.session["user_id"] = user.id
 
-            return redirect("/admin/")
+            return redirect("/feed/")
         except Exception as e:
             return render(request, "register.html", {"error": f"Erro ao criar usuário: {str(e)}"})
 
     return render(request, "register.html")
+
+
+def feed_page_view(request):
+    if not request.user.is_authenticated:
+        return redirect("/login/")
+
+    posts = Posts.objects.filter(user=request.user).order_by("-created_at")
+
+    posts_data = []
+    for post in posts:
+        post_dict = {
+            "id": post.id,
+            "name": post.name,
+            "description": post.description,
+            "price": post.price,
+            "created_at": post.created_at,
+            "image_url": get_s3_url(post.image_s3_key) if post.image_s3_key else None,
+            "thumbnail_url": get_s3_url(post.image_thumbnail_s3_key) if post.image_thumbnail_s3_key else None,
+            "bw_image_url": get_s3_url(post.image_bw_s3_key) if post.image_bw_s3_key else None,
+        }
+        posts_data.append(post_dict)
+
+    return render(request, "feed.html", {"posts": posts_data, "user": request.user})
