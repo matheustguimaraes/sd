@@ -151,7 +151,6 @@ backend/*/staticfiles/
 # Local .tfvars files
 *.tfvars
 !terraform.tfvars.example
-**tf
 **terraform.tfstate
 **terraform.tfstate.backup
 **terraform.tfstate.lock
