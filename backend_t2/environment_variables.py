@@ -31,6 +31,12 @@ AWS_ACCESS_KEY_ID_ENV = os.environ.get("AWS_ACCESS_KEY_ID")
 print(f"environment_variables.py AWS_ACCESS_KEY_ID_ENV: {AWS_ACCESS_KEY_ID_ENV}")
 AWS_SECRET_ACCESS_KEY_ENV = os.environ.get("AWS_SECRET_ACCESS_KEY")
 print(f"environment_variables.py AWS_SECRET_ACCESS_KEY_ENV: {AWS_SECRET_ACCESS_KEY_ENV}")
+
+AWS_ACCESS_KEY_DYNAMODB = os.environ.get("AWS_ACCESS_KEY_DYNAMODB")
+print(f"environment_variables.py AWS_ACCESS_KEY_DYNAMODB: {AWS_ACCESS_KEY_DYNAMODB}")
+AWS_SECRET_ACCESS_KEY_DYNAMODB = os.environ.get("AWS_SECRET_ACCESS_KEY_DYNAMODB")
+print(f"environment_variables.py AWS_SECRET_ACCESS_KEY_DYNAMODB: {AWS_SECRET_ACCESS_KEY_DYNAMODB}")
+
 AWS_STORAGE_BUCKET_NAME_ENV = os.environ.get("AWS_STORAGE_BUCKET_NAME")
 print(f"environment_variables.py AWS_STORAGE_BUCKET_NAME_ENV: {AWS_STORAGE_BUCKET_NAME_ENV}")
 AWS_S3_REGION_NAME_ENV = os.environ.get("AWS_S3_REGION_NAME")
@@ -53,7 +59,7 @@ SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN")
 USE_S3_ENV = bool(os.environ.get("USE_S3"))
 print(f"environment_variables.py USE_S3_ENV: {USE_S3_ENV}")
 
-DEBUG_MODE = os.environ.get("DEBUG_MODE")
+DEBUG_MODE = bool(os.environ.get("DEBUG_MODE", "false").upper() == "TRUE")
 print(f"environment_variables.py DEBUG_MODE: {DEBUG_MODE}")
 
 SERVICE_API_TOKEN = os.environ.get("SERVICE_API_TOKEN")

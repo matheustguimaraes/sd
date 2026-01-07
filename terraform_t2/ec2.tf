@@ -31,16 +31,17 @@ systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
 systemctl status amazon-ssm-agent || echo "SSM agent status check completed"
 
-# Install Docker
-yum install -y docker
-service docker start
-systemctl enable docker
-usermod -a -G docker ec2-user
+sudo yum update -y 
+sudo amazon-linux-extras install docker 
+sudo yum install docker 
+sudo service docker start 
+sudo usermod -a -G docker ec2-user 
+docker info
 
 # Install Docker Compose
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose version
 
 # Install AWS CLI v2
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -70,6 +71,7 @@ resource "aws_instance" "docker_compose_host" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.ec2.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+  key_name               = var.key_pair_name
   user_data              = local.ec2_user_data
 
   root_block_device {
