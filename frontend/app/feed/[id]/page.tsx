@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { productsApi } from "@/lib/api";
 import Link from "next/link";
@@ -11,6 +11,7 @@ export default function PostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = parseInt(params.id as string);
+  const queryClient = useQueryClient();
 
   const {
     data: post,
@@ -20,6 +21,20 @@ export default function PostPage() {
     queryKey: ["posts", postId],
     queryFn: () => productsApi.get(postId),
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => productsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      router.push("/feed");
+    },
+  });
+
+  const handleDelete = async () => {
+    if (confirm("Tem certeza que deseja excluir este post?")) {
+      deleteMutation.mutate(postId);
+    }
+  };
 
   useEffect(() => {
     if (!post || !post.image_url || post.bw_image_url) {
@@ -187,6 +202,23 @@ export default function PostPage() {
             )}
           </div>
         )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => router.push(`/feed/${postId}/edit`)}
+            className="flex-1 rounded-lg border border-yellow-600 px-4 py-2 text-sm font-medium text-yellow-600 hover:bg-yellow-600 hover:text-white"
+          >
+            Editar
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+            className="flex-1 rounded-lg border border-red-600 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-600 hover:text-white disabled:opacity-50"
+          >
+            {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+          </button>
+        </div>
       </div>
     </PageLayout>
   );

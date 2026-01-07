@@ -159,6 +159,12 @@ export default function FeedPage() {
                   Ver detalhes
                 </button>
                 <button
+                  onClick={() => router.push(`/feed/${post.id}/edit`)}
+                  className="rounded-lg border border-yellow-600 px-4 py-2 text-sm font-medium text-yellow-600 hover:bg-yellow-600 hover:text-white"
+                >
+                  Editar
+                </button>
+                <button
                   onClick={() => handleDelete(post.id)}
                   className="rounded-lg border border-red-600 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-600 hover:text-white"
                 >
