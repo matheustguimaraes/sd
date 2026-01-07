@@ -1,33 +1,29 @@
-import boto3
 import json
+import traceback
 from datetime import datetime
+
+import boto3
+import pika
 from django.core.files.storage import default_storage
-from storages.backends.s3boto3 import S3Boto3Storage
 from environment_variables import (
+    AWS_ACCESS_KEY_DYNAMODB,
     AWS_ACCESS_KEY_ID_ENV,
-    AWS_SECRET_ACCESS_KEY_ENV,
-    AWS_S3_REGION_NAME_ENV,
-    AWS_STORAGE_BUCKET_NAME_ENV,
     AWS_S3_ENDPOINT_URL_ENV,
+    AWS_S3_REGION_NAME_ENV,
+    AWS_SECRET_ACCESS_KEY_DYNAMODB,
+    AWS_SECRET_ACCESS_KEY_ENV,
+    AWS_STORAGE_BUCKET_NAME_ENV,
+    DEBUG_MODE,
     DYNAMODB_REGION_ENV,
     DYNAMODB_TABLE_NAME_ENV,
     RABBITMQ_HOST,
-    RABBITMQ_PORT,
-    RABBITMQ_USER,
     RABBITMQ_PASSWORD,
+    RABBITMQ_PORT,
     RABBITMQ_QUEUE_NAME_ENV,
+    RABBITMQ_USER,
     SNS_TOPIC_ARN,
-    DEBUG_MODE,
 )
-import pika
 from posts_api.storage_backends import PrivateMediaStorage
-import traceback
-
-
-class MediaStorage(S3Boto3Storage):
-    location = "media"
-    default_acl = "public-read"
-    file_overwrite = False
 
 
 def get_s3_client():
@@ -99,8 +95,8 @@ def log_crud_action(action_type, model_name, data, user_id=None):
     try:
         dynamodb = boto3.resource(
             "dynamodb",
-            aws_access_key_id=AWS_ACCESS_KEY_ID_ENV,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY_ENV,
+            aws_access_key_id=AWS_ACCESS_KEY_DYNAMODB,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY_DYNAMODB,
             region_name=DYNAMODB_REGION_ENV,
         )
         print(f"log_crud_action dynamodb: {dynamodb}")
@@ -134,8 +130,8 @@ def log_request_info(ip_address, user_id, username, path=None, method=None):
     try:
         dynamodb = boto3.resource(
             "dynamodb",
-            aws_access_key_id=AWS_ACCESS_KEY_ID_ENV,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY_ENV,
+            aws_access_key_id=AWS_ACCESS_KEY_DYNAMODB,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY_DYNAMODB,
             region_name=DYNAMODB_REGION_ENV,
         )
         print(f"log_request_info dynamodb: {dynamodb}")
