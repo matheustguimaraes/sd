@@ -33,10 +33,7 @@ def process_image_task(message: dict):
 
         upload = None
         private = False
-        if Upload.objects.filter(id=upload_id).exists():
-            upload = Upload.objects.filter(id=upload_id).first()
-            private = False
-        elif UploadPrivate.objects.filter(id=upload_id).exists():
+        if UploadPrivate.objects.filter(id=upload_id).exists():
             upload = UploadPrivate.objects.filter(id=upload_id).first()
             private = True
         else:
