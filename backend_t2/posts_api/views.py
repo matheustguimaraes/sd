@@ -15,6 +15,7 @@ from posts_api.serializers import ProductSerializer, ProfileSerializer
 from posts_api.utils import (
     log_crud_action,
     get_s3_url,
+    delete_s3_file,
 )
 
 from datetime import datetime
@@ -23,6 +24,7 @@ from django.core.files.storage import FileSystemStorage
 
 from posts_api.models import UploadPrivate
 from posts_api.tasks import process_image_task
+from posts_api.storage_backends import PrivateMediaStorage
 
 
 def image_upload(request):
@@ -124,13 +126,30 @@ class ProductViewSet(viewsets.ModelViewSet):
         print(f"upload_image image_file: {image_file}")
 
         try:
+            # Store old image keys before updating
+            old_image_s3_key = post.image_s3_key
+            old_image_bw_s3_key = post.image_bw_s3_key
+            old_image_thumbnail_s3_key = post.image_thumbnail_s3_key
+
             upload = UploadPrivate(file=image_file)
             upload.save()
             print(f"upload_image upload: {upload}")
 
             post.image_s3_key = upload.file.name
+            # Clear BW and thumbnail keys since new image will be processed
+            post.image_bw_s3_key = None
+            post.image_thumbnail_s3_key = None
             post.save()
             print(f"upload_image post saved: {post}")
+
+            # Delete old images from S3/MinIO
+            storage = PrivateMediaStorage()
+            if old_image_s3_key:
+                delete_s3_file(old_image_s3_key, storage)
+            if old_image_bw_s3_key:
+                delete_s3_file(old_image_bw_s3_key, storage)
+            if old_image_thumbnail_s3_key:
+                delete_s3_file(old_image_thumbnail_s3_key, storage)
 
             message = {
                 "action": "process_image",

@@ -7,6 +7,8 @@ from environment_variables import (
     AWS_ACCESS_KEY_ID_ENV,
     AWS_SECRET_ACCESS_KEY_ENV,
     AWS_S3_REGION_NAME_ENV,
+    AWS_STORAGE_BUCKET_NAME_ENV,
+    AWS_S3_ENDPOINT_URL_ENV,
     DYNAMODB_REGION_ENV,
     DYNAMODB_TABLE_NAME_ENV,
     RABBITMQ_HOST,
@@ -29,12 +31,14 @@ class MediaStorage(S3Boto3Storage):
 
 
 def get_s3_client():
-    return boto3.client(
-        "s3",
-        aws_access_key_id=AWS_ACCESS_KEY_ID_ENV,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY_ENV,
-        region_name=AWS_S3_REGION_NAME_ENV,
-    )
+    client_kwargs = {
+        "aws_access_key_id": AWS_ACCESS_KEY_ID_ENV,
+        "aws_secret_access_key": AWS_SECRET_ACCESS_KEY_ENV,
+        "region_name": AWS_S3_REGION_NAME_ENV,
+    }
+    if AWS_S3_ENDPOINT_URL_ENV:
+        client_kwargs["endpoint_url"] = AWS_S3_ENDPOINT_URL_ENV
+    return boto3.client("s3", **client_kwargs)
 
 
 def get_s3_url(s3_key):
@@ -55,6 +59,36 @@ def upload_to_s3(file, s3_key):
     print(f"upload_to_s3 s3_key: {s3_key}")
 
     return default_storage.save(s3_key, file)
+
+
+def delete_s3_file(s3_key, storage_class=None):
+    """Delete a file from S3/MinIO storage.
+
+    Args:
+        s3_key: The S3 key (path) of the file to delete
+        storage_class: Optional storage class instance to determine bucket name
+                       If None, uses PrivateMediaStorage by default
+    """
+    if not s3_key:
+        return
+
+    try:
+        storage_class = PrivateMediaStorage()
+
+        # Get bucket name from storage instance or use default
+        bucket_name = AWS_STORAGE_BUCKET_NAME_ENV
+        location = storage_class.location
+        full_key = f"{location}/{s3_key}"
+
+        # Remove leading slash if present
+        full_key = full_key.lstrip("/")
+
+        s3_client = get_s3_client()
+        s3_client.delete_object(Bucket=bucket_name, Key=full_key)
+        print(f"delete_s3_file: Successfully deleted {full_key} from bucket {bucket_name}")
+    except Exception as e:
+        print(f"delete_s3_file: Error deleting {s3_key}: {str(e)}")
+        traceback.print_exc()
 
 
 def log_crud_action(action_type, model_name, data, user_id=None):
