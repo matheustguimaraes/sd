@@ -1,25 +1,17 @@
-FROM --platform=linux/amd64 docker.io/library/python:3.11
+FROM --platform=linux/amd64 python:3.11-slim
 
-ENV PYTHONUNBUFFERED=1
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8
-ENV PYTHON_VERSION=3.10
-ENV PYTHONPATH="."
+WORKDIR /app
 
-RUN apt update -y
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt install redis-server default-jdk -y
+COPY requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . celery_mdcc_nuvem
-
-WORKDIR /celery_mdcc_nuvem
-
-# Copy only requirements first for better caching
-COPY requirements.txt /tmp/requirements.txt
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+COPY . .
 
 EXPOSE 5000
 

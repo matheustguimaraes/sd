@@ -56,7 +56,7 @@ DYNAMODB_TABLE_NAME_ENV = os.environ.get("DYNAMODB_TABLE_NAME")
 
 SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN")
 
-USE_S3_ENV = bool(os.environ.get("USE_S3"))
+USE_S3_ENV = bool(os.environ.get("USE_S3", "false").upper() == "TRUE")
 print(f"environment_variables.py USE_S3_ENV: {USE_S3_ENV}")
 
 DEBUG_MODE = bool(os.environ.get("DEBUG_MODE", "false").upper() == "TRUE")
