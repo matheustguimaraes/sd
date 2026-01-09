@@ -126,7 +126,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         print(f"upload_image image_file: {image_file}")
 
         try:
-            # Store old image keys before updating
             old_image_s3_key = post.image_s3_key
             old_image_bw_s3_key = post.image_bw_s3_key
             old_image_thumbnail_s3_key = post.image_thumbnail_s3_key
@@ -136,13 +135,11 @@ class ProductViewSet(viewsets.ModelViewSet):
             print(f"upload_image upload: {upload}")
 
             post.image_s3_key = upload.file.name
-            # Clear BW and thumbnail keys since new image will be processed
             post.image_bw_s3_key = None
             post.image_thumbnail_s3_key = None
             post.save()
             print(f"upload_image post saved: {post}")
 
-            # Delete old images from S3/MinIO
             storage = PrivateMediaStorage()
             if old_image_s3_key:
                 delete_s3_file(old_image_s3_key, storage)
@@ -157,7 +154,6 @@ class ProductViewSet(viewsets.ModelViewSet):
                 "upload_id": upload.id,
                 "timestamp": datetime.now().isoformat(),
             }
-            # publish_to_sns(message)
             process_image_task.delay(message)
             print(f"upload_image message published: {message}")
 

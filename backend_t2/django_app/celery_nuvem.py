@@ -1,5 +1,3 @@
-"""Base Celery App."""
-
 import os
 
 import django

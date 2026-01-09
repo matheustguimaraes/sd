@@ -227,7 +227,6 @@ export default function PostPage() {
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex gap-3">
           <button
             onClick={() => router.push(`/feed/${postId}/edit`)}

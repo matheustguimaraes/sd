@@ -74,7 +74,6 @@ class Command(BaseCommand):
             sys.exit(1)
 
     def process_image(self, message):
-        """Process image and generate thumbnail."""
         product_id = message.get("product_id")
         s3_key = message.get("s3_key")
 
@@ -89,13 +88,11 @@ class Command(BaseCommand):
             return
 
         try:
-            # Download the original image
             self.stdout.write(self.style.WARNING(f"Downloading image: {s3_key}"))
             image_file = default_storage.open(s3_key, "rb")
             image_data = image_file.read()
             image_file.close()
 
-            # Read image with OpenCV
             nparr = np.frombuffer(image_data, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
@@ -103,7 +100,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR("Failed to decode image"))
                 return
 
-            # Generate thumbnail (resize to max 300x300 while maintaining aspect ratio)
             height, width = img.shape[:2]
             max_size = 300
 
@@ -116,7 +112,6 @@ class Command(BaseCommand):
 
             thumbnail = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
-            # Encode thumbnail as JPEG
             is_success, buffer = cv2.imencode(".jpg", thumbnail)
             if not is_success:
                 self.stdout.write(self.style.ERROR("Failed to encode thumbnail"))
@@ -124,14 +119,11 @@ class Command(BaseCommand):
 
             thumbnail_data = buffer.tobytes()
 
-            # Generate thumbnail S3 key
             thumbnail_s3_key = f"posts/{product_id}/thumbnails/{uuid.uuid4()}_thumbnail.jpg"
 
-            # Upload thumbnail
             self.stdout.write(self.style.WARNING(f"Uploading thumbnail: {thumbnail_s3_key}"))
             default_storage.save(thumbnail_s3_key, ContentFile(thumbnail_data))
 
-            # Update post with thumbnail key
             post.image_thumbnail_s3_key = thumbnail_s3_key
             post.save()
 

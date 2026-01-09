@@ -16,7 +16,6 @@ def sum_a_and_b(a: int, b: int):
 
 @shared_task
 def process_image_task(message: dict):
-    """Process image: convert to black and white and update model entry."""
     print(f"process_image_task message: {message}")
     try:
         post_id = message.get("post_id")
@@ -57,7 +56,6 @@ def process_image_task(message: dict):
 
         print(f"process_image_task created black and white image")
 
-        # Extract base name and extension
         base_key = file_name.rsplit(".", 1)[0] if "." in file_name else file_name
         extension = file_name.rsplit(".", 1)[1] if "." in file_name else "jpg"
         bw_filename = f"{base_key}_bw.{extension}"
@@ -67,7 +65,6 @@ def process_image_task(message: dict):
 
         print(f"process_image_task bw_filename: {bw_filename}")
 
-        # Determine storage backend based on original key location
         if private:
             upload_bw = UploadPrivate(file=bw_file)
             upload_bw.save()

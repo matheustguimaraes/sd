@@ -1,9 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-// Ensures the base URL always ends with /api
 const getApiBaseUrl = () => {
-  // Se NEXT_PUBLIC_API_URL estiver definido, usa ele
   if (process.env.NEXT_PUBLIC_API_URL) {
     const url = process.env.NEXT_PUBLIC_API_URL;
     return url;
@@ -32,7 +30,6 @@ api.interceptors.request.use((config) => {
       delete config.headers["content-type"];
     }
   }
-  // Ensures the baseURL is being used correctly
   if (config.url && !config.url.startsWith("http")) {
     config.url = config.url.startsWith("/") ? config.url : `/${config.url}`;
   }

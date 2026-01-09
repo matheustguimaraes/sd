@@ -34,7 +34,6 @@ export default function EditPostPage() {
       startTransition(() => {
         setName(post.name || "");
         setDescription(post.description || "");
-        // Set preview to current image if available
         if (post.image_url) {
           setPreview(post.image_url);
         } else if (post.thumbnail_url) {
@@ -64,13 +63,11 @@ export default function EditPostPage() {
     }) => {
       setStatusMessage("Atualizando post...");
 
-      // Update text fields first
       const updatedPost = await productsApi.update(postId, {
         name: data.name,
         description: data.description,
       });
 
-      // Upload new image if provided
       if (data.file) {
         setStatusMessage("Enviando nova imagem...");
         await productsApi.uploadImage(postId, data.file);
@@ -116,7 +113,6 @@ export default function EditPostPage() {
 
   const handleRemoveImage = () => {
     setFile(null);
-    // Reset preview to original image
     if (post?.image_url) {
       setPreview(post.image_url);
     } else if (post?.thumbnail_url) {
@@ -237,7 +233,6 @@ export default function EditPostPage() {
       <h2 className="mb-6 text-2xl font-bold text-black">Editar Post</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {/* Image Upload */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-black">Foto</label>
           <div>
@@ -312,7 +307,6 @@ export default function EditPostPage() {
           </div>
         </div>
 
-        {/* Name */}
         <div className="flex flex-col gap-2">
           <label htmlFor="name" className="text-sm font-medium text-black">
             Nome *
@@ -328,7 +322,6 @@ export default function EditPostPage() {
           />
         </div>
 
-        {/* Description */}
         <div className="flex flex-col gap-2">
           <label
             htmlFor="description"
@@ -346,7 +339,6 @@ export default function EditPostPage() {
           />
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={uploading || !name.trim()}

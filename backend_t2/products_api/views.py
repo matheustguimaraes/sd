@@ -128,7 +128,6 @@ class ProductViewSet(viewsets.ModelViewSet):
 @api_view(["GET", "PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
-    """Get or update user profile."""
     profile, created = Profile.objects.get_or_create(user=request.user)
 
     if request.method == "GET":
@@ -175,6 +174,5 @@ def register_view(request):
         return Response({"error": "Email já está em uso"}, status=400)
 
     user = User.objects.create_user(username=username, email=email, password=password)
-    # Create profile automatically when user registers
     Profile.objects.create(user=user)
     return Response({"message": "Usuário criado com sucesso"}, status=201)

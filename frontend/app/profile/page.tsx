@@ -33,14 +33,12 @@ export default function ProfilePage() {
     },
   });
 
-  // Initialize form when profile loads
   useEffect(() => {
     if (profile && !isEditing) {
       setAge(profile.age ?? null);
       setCourse(profile.course ?? "");
       setCity(profile.city ?? "");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, isEditing]);
 
   const handleSubmit = (e: React.FormEvent) => {

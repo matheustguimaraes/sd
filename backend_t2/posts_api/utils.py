@@ -58,25 +58,16 @@ def upload_to_s3(file, s3_key):
 
 
 def delete_s3_file(s3_key, storage_class=None):
-    """Delete a file from S3/MinIO storage.
-
-    Args:
-        s3_key: The S3 key (path) of the file to delete
-        storage_class: Optional storage class instance to determine bucket name
-                       If None, uses PrivateMediaStorage by default
-    """
     if not s3_key:
         return
 
     try:
         storage_class = PrivateMediaStorage()
 
-        # Get bucket name from storage instance or use default
         bucket_name = AWS_STORAGE_BUCKET_NAME_ENV
         location = storage_class.location
         full_key = f"{location}/{s3_key}"
 
-        # Remove leading slash if present
         full_key = full_key.lstrip("/")
 
         s3_client = get_s3_client()
