@@ -381,7 +381,6 @@ def feed_page_view(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def logs_view(request):
-    """Fetch logs from DynamoDB."""
     limit = int(request.query_params.get("limit", 100))
     action_type = request.query_params.get("action_type")
     model_name = request.query_params.get("model_name")

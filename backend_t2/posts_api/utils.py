@@ -209,9 +209,6 @@ def publish_to_sns(message):
 
 def get_dynamodb_logs(limit=100, action_type=None, model_name=None):
     """Fetch logs from DynamoDB table."""
-    # if DEBUG_MODE:
-    #     return []
-
     try:
         dynamodb = boto3.resource(
             "dynamodb",
@@ -243,19 +240,15 @@ def get_dynamodb_logs(limit=100, action_type=None, model_name=None):
         response = table.scan(**scan_kwargs)
         items = response.get("Items", [])
 
-        # When using boto3.resource, items are already deserialized
-        # Convert to regular Python dicts and handle Decimal types
         from decimal import Decimal
 
         logs = []
         for item in items:
             log = {}
             for k, v in item.items():
-                # Convert Decimal to string for JSON serialization
                 if isinstance(v, Decimal):
                     log[k] = str(v)
                 elif isinstance(v, (dict, list)):
-                    # Recursively convert Decimals in nested structures
                     log[k] = json.loads(json.dumps(v, default=str))
                 else:
                     log[k] = v
