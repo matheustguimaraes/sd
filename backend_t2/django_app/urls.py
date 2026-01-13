@@ -15,6 +15,7 @@ from posts_api.views import (
     login_page_view,
     register_page_view,
     feed_page_view,
+    logs_view,
 )
 
 router = DefaultRouter()
@@ -37,6 +38,7 @@ urlpatterns = [
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/register/", register_view, name="register"),
     path("auth/profile/", profile_view, name="profile"),
+    path("logs/", logs_view, name="logs"),
     path("login/", login_page_view, name="login_page"),
     path("register/", register_page_view, name="register_page"),
     path("feed/", feed_page_view, name="feed_page"),

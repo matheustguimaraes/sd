@@ -205,3 +205,67 @@ def publish_to_sns(message):
         print(f"publish_to_sns error: {e}")
         traceback.print_exc()
         return None
+
+
+def get_dynamodb_logs(limit=100, action_type=None, model_name=None):
+    """Fetch logs from DynamoDB table."""
+    # if DEBUG_MODE:
+    #     return []
+
+    try:
+        dynamodb = boto3.resource(
+            "dynamodb",
+            aws_access_key_id=AWS_ACCESS_KEY_DYNAMODB,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY_DYNAMODB,
+            region_name=DYNAMODB_REGION_ENV,
+        )
+
+        table = dynamodb.Table(DYNAMODB_TABLE_NAME_ENV)
+
+        scan_kwargs = {"Limit": limit}
+
+        if action_type or model_name:
+            from boto3.dynamodb import conditions
+
+            filter_expression = None
+            if action_type:
+                filter_expression = conditions.Attr("action_type").eq(action_type)
+            if model_name:
+                model_filter = conditions.Attr("model_name").eq(model_name)
+                if filter_expression:
+                    filter_expression = filter_expression & model_filter
+                else:
+                    filter_expression = model_filter
+
+            if filter_expression:
+                scan_kwargs["FilterExpression"] = filter_expression
+
+        response = table.scan(**scan_kwargs)
+        items = response.get("Items", [])
+
+        # When using boto3.resource, items are already deserialized
+        # Convert to regular Python dicts and handle Decimal types
+        from decimal import Decimal
+
+        logs = []
+        for item in items:
+            log = {}
+            for k, v in item.items():
+                # Convert Decimal to string for JSON serialization
+                if isinstance(v, Decimal):
+                    log[k] = str(v)
+                elif isinstance(v, (dict, list)):
+                    # Recursively convert Decimals in nested structures
+                    log[k] = json.loads(json.dumps(v, default=str))
+                else:
+                    log[k] = v
+            logs.append(log)
+
+        logs.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+
+        return logs
+
+    except Exception as e:
+        print(f"get_dynamodb_logs error: {e}")
+        traceback.print_exc()
+        return []

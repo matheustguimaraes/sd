@@ -154,3 +154,33 @@ export const profileApi = {
   },
 };
 
+export interface Log {
+  id: string;
+  action_type: string;
+  model_name: string;
+  data?: string;
+  timestamp: string;
+  user_id?: string;
+  ip_address?: string;
+  username?: string;
+  path?: string;
+  method?: string;
+}
+
+export const logsApi = {
+  list: async (params?: {
+    limit?: number;
+    action_type?: string;
+    model_name?: string;
+  }): Promise<{ logs: Log[]; count: number }> => {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.action_type) queryParams.append("action_type", params.action_type);
+    if (params?.model_name) queryParams.append("model_name", params.model_name);
+
+    const queryString = queryParams.toString();
+    const url = `/logs/${queryString ? `?${queryString}` : ""}`;
+    const response = await api.get(url);
+    return response.data;
+  },
+};

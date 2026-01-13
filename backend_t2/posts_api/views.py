@@ -16,6 +16,7 @@ from posts_api.utils import (
     log_crud_action,
     get_s3_url,
     delete_s3_file,
+    get_dynamodb_logs,
 )
 
 from datetime import datetime
@@ -375,3 +376,16 @@ def feed_page_view(request):
         posts_data.append(post_dict)
 
     return render(request, "feed.html", {"posts": posts_data, "user": request.user})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def logs_view(request):
+    """Fetch logs from DynamoDB."""
+    limit = int(request.query_params.get("limit", 100))
+    action_type = request.query_params.get("action_type")
+    model_name = request.query_params.get("model_name")
+
+    logs = get_dynamodb_logs(limit=limit, action_type=action_type, model_name=model_name)
+
+    return Response({"logs": logs, "count": len(logs)}, status=status.HTTP_200_OK)
