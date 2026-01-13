@@ -180,6 +180,19 @@ class ProductViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+
+        old_image_s3_key = instance.image_s3_key
+        old_image_s3_key_bw = instance.image_bw_s3_key
+
+        storage = PrivateMediaStorage()
+        delete_s3_file(old_image_s3_key, storage)
+        delete_s3_file(old_image_s3_key_bw, storage)
+
+        return Response({"detail": "Object successfully deleted."}, status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=["post"], permission_classes=[AllowAny], url_path="register-bw-image")
     def register_bw_image(self, request, pk=None):
         try:

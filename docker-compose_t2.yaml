@@ -8,6 +8,7 @@ services:
       - "5673:5672"
       - "15673:15672"
     environment:
+    # mudar para .env.docker
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=admin
     volumes:
