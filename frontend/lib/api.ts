@@ -1,17 +1,13 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-// Ensures the base URL always ends with /api
 const getApiBaseUrl = () => {
-  // Se NEXT_PUBLIC_API_URL estiver definido, usa ele
   if (process.env.NEXT_PUBLIC_API_URL) {
     const url = process.env.NEXT_PUBLIC_API_URL;
-    return url.endsWith("/api") ? url : `${url}/api`;
+    return url;
   }
   
-  // Fallback: usa URL relativa (mesmo domínio) quando frontend e backend estão no mesmo ALB
-  // Isso funciona tanto no browser quanto no servidor Next.js
-  return "/api";
+  return "http://localhost:8000";
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -34,7 +30,6 @@ api.interceptors.request.use((config) => {
       delete config.headers["content-type"];
     }
   }
-  // Ensures the baseURL is being used correctly
   if (config.url && !config.url.startsWith("http")) {
     config.url = config.url.startsWith("/") ? config.url : `/${config.url}`;
   }
@@ -159,3 +154,33 @@ export const profileApi = {
   },
 };
 
+export interface Log {
+  id: string;
+  action_type: string;
+  model_name: string;
+  data?: string;
+  timestamp: string;
+  user_id?: string;
+  ip_address?: string;
+  username?: string;
+  path?: string;
+  method?: string;
+}
+
+export const logsApi = {
+  list: async (params?: {
+    limit?: number;
+    action_type?: string;
+    model_name?: string;
+  }): Promise<{ logs: Log[]; count: number }> => {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.action_type) queryParams.append("action_type", params.action_type);
+    if (params?.model_name) queryParams.append("model_name", params.model_name);
+
+    const queryString = queryParams.toString();
+    const url = `/logs/${queryString ? `?${queryString}` : ""}`;
+    const response = await api.get(url);
+    return response.data;
+  },
+};
